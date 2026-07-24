@@ -160,7 +160,7 @@ class ClaudeSubscriptionProvider(ProviderClient):
                 "--mcp-config",
                 '{"mcpServers":{}}',
                 "--system-prompt",
-                "Act only as OpenWorker's structured model adapter. Built-in tools are disabled.",
+                "Act only as OpenWorker Subscription Bridge's structured model adapter. Built-in tools are disabled.",
             ]
             if model and model != "default":
                 cmd.extend(["--model", model])

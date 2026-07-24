@@ -133,7 +133,7 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   }, []);
 
   const info = providers.find((p) => p.name === sel);
-  // Codex owns its ChatGPT OAuth session outside OpenWorker. It is connected when the
+  // Codex owns its ChatGPT OAuth session outside Subscription Bridge. It is connected when the
   // sidecar confirms the official local runtime is logged in, even though no API key is saved.
   const credentialed = !!info?.configured && (!!info?.needs_key || isSubscriptionProvider(info));
 
@@ -436,7 +436,7 @@ export function ProviderForm({
       {isSubscriptionProvider(info) && (
         <p className="text-[11.5px] text-faint mt-2">
           Uses the {subscriptionLabel(info)} already signed in through the official local {info?.name === "claude_subscription" ? "Claude Code" : "Codex"} runtime.
-          No API key or OAuth token is copied into OpenWorker.
+          No API key or OAuth token is copied into Subscription Bridge.
         </p>
       )}
       {info && isLocalProvider(info) && (

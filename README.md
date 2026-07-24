@@ -1,10 +1,10 @@
-# OpenWorker
+# OpenWorker Subscription Bridge
 
-**[Upstream project](https://openworker.com)** · [Subscription fork](#chatgpt-and-claude-subscription-fork) · [Issues](https://github.com/dennykim123/openworker/issues)
+**[Upstream OpenWorker](https://openworker.com)** · [Subscription bridge](#chatgpt-and-claude-subscription-bridge) · [Issues](https://github.com/dennykim123/openworker-subscription-bridge/issues)
 
-> **Experimental community fork** - The ChatGPT and Claude subscription providers are usable but are not part of the upstream release or its auto-update channel. [Fork issues](https://github.com/dennykim123/openworker/issues) are welcome.
+> **Unofficial community fork of OpenWorker.** This project is not affiliated with OpenWorker, OpenAI, or Anthropic. Its ChatGPT and Claude subscription providers are not part of the upstream OpenWorker release or update channel.
 
-**AI that gets your everyday tasks done.** OpenWorker is an open-source AI coworker that lives on your desktop and delivers **finished work**, not just chat: a polished document, a Slack reply with the numbers, an updated calendar, a triaged inbox.
+OpenWorker Subscription Bridge is a community edition of the open-source OpenWorker desktop agent. It keeps the upstream workflow while adding clearly separated subscription-backed model options.
 
 It runs on your machine and doesn't lock you into any model: bring your own API key for OpenAI, Anthropic, Google, or an open-weight provider, or run fully local with Ollama. Your data leaves your machine only through the model and integrations *you* choose.
 
@@ -13,10 +13,10 @@ It runs on your machine and doesn't lock you into any model: bring your own API 
 This community fork adds **ChatGPT subscription access through Codex** and **Claude subscription access through Claude Code**. It is not an official OpenWorker, OpenAI, or Anthropic release.
 
 - No OpenAI or Anthropic API key is required for these two providers.
-- OpenWorker does not read token files or copy OAuth tokens. It delegates model turns to the locally installed `codex` or `claude` executable.
+- Subscription Bridge does not read token files or copy OAuth tokens. It delegates model turns to the locally installed `codex` or `claude` executable.
 - Codex runs in ephemeral, read-only mode. Claude Code runs with built-in tools, MCP, project settings, and session persistence disabled.
 - Model requests still leave your Mac for the selected provider, and normal subscription limits and terms apply.
-- OpenWorker remains responsible for its own tools and approval prompts; the subscription subprocesses do not operate tools themselves.
+- The OpenWorker agent remains responsible for its own tools and approval prompts; the subscription subprocesses do not operate tools themselves.
 
 Requirements:
 
@@ -28,19 +28,13 @@ After launching this fork, open **Models**, choose **ChatGPT Subscription (Codex
 
 [![How OpenWorker works](docs/assets/how-it-works.png)](https://openworker.com)
 
-## Download
+## Installation status
 
-[**⬇ macOS (Apple Silicon)**](https://download.openworker.com/mac)
-<sub>macOS 12+ · signed & notarized · auto-updates</sub>
-
-[**⬇ Windows 10/11 (x64)**](https://download.openworker.com/windows)
-<sub>builds are not yet code-signed, so SmartScreen will warn; signing is in progress</sub>
-
-These links install the official upstream build and do **not** include this fork's subscription providers. To use the fork today, follow [Run from source](#run-from-source).
+This community fork does not yet publish a signed, notarized installer. The official OpenWorker download does **not** include the subscription bridge. For now, use [Run from source](#run-from-source) or inspect the reproducible GitHub Actions build artifacts.
 
 ## How it works
 
-1. Tell OpenWorker the outcome you want - "prepare a customer brief," "untangle my calendar," "draft a report," "check where the release stands across Jira and GitHub."
+1. Tell Subscription Bridge the outcome you want - "prepare a customer brief," "untangle my calendar," "draft a report," "check where the release stands across Jira and GitHub."
 2. It breaks the task into steps and works across your desktop, files, and connected apps.
 3. Before anything consequential - sending a message, changing a calendar, running a command - it checks in and you approve or redirect.
 4. You get the finished deliverable, not a to-do list.
@@ -49,7 +43,7 @@ Under the hood:
 
 ```text
 ┌────────────────────────────────────────────────┐
-│              OpenWorker desktop app            │  native shell + GUI
+│       OpenWorker Subscription Bridge app        │  native shell + GUI
 ├────────────────────────────────────────────────┤
 │           local agent server (Python)          │  engine · tools · connectors - built on aisuite
 ├───────────────┬────────────────┬───────────────┤
@@ -76,15 +70,15 @@ A curated model list marks what we've verified for tool-calling work. Adding any
 
 ## Privacy
 
-OpenWorker is local-first. Everything lives on your machine: the agent loop, your conversations, connector tokens, and model keys - all in the app's local secret store. The only cloud piece is a small service that brokers OAuth handshakes for connectors. You can always use the App without signing-in - use the connectors via manually-created credentials/API-keys.
+Subscription Bridge is local-first. Everything lives on your machine: the agent loop, your conversations, connector tokens, and model keys - all in the app's local secret store. The optional upstream OpenWorker Cloud service brokers OAuth handshakes for connectors. You can always use the app without signing in by using manually created credentials or API keys.
 
 ## Run from source
 
 Prerequisites: Python 3.10+, Node 20+, and (for the desktop shell) the Rust toolchain via [rustup](https://rustup.rs/).
 
 ```shell
-git clone https://github.com/dennykim123/openworker
-cd openworker
+git clone https://github.com/dennykim123/openworker-subscription-bridge
+cd openworker-subscription-bridge
 
 # 1. One-time bootstrap - creates the Python venv at .venv
 #    (on Windows, run from Git Bash or WSL)
@@ -117,14 +111,14 @@ Tests: `.venv/bin/pytest` (server), `npm test` and `npm run e2e` in `surfaces/gu
 
 ## Built on aisuite
 
-OpenWorker's engine is built on [**aisuite**](https://github.com/andrewyng/aisuite), a lightweight Python library providing a unified chat-completions API across LLM providers and an agents layer with tools, toolkits, and MCP support. If you want to build your own agent harness rather than use ours, start there; this repo is a working reference for what aisuite can carry.
+The upstream OpenWorker engine is built on [**aisuite**](https://github.com/andrewyng/aisuite), a lightweight Python library providing a unified chat-completions API across LLM providers and an agents layer with tools, toolkits, and MCP support. This fork retains that architecture.
 
 OpenWorker was originally developed inside the aisuite repository before moving to its own home here; thanks to the aisuite contributors whose work it builds on.
 
 ## Contributing
 
-Contributions and bug reports for this fork are welcome - open an [issue](https://github.com/dennykim123/openworker/issues) or a pull request. For the original project, use the [upstream repository](https://github.com/andrewyng/openworker).
-For any PR, please attach screenshots of what was broken and how it is fixed now. We will shortly add features that you can contribute to.
+Contributions and bug reports for this fork are welcome - open an [issue](https://github.com/dennykim123/openworker-subscription-bridge/issues) or a pull request. For the original project, use the [upstream repository](https://github.com/andrewyng/openworker).
+For any PR, please attach screenshots of what was broken and how it is fixed now.
 Please note that we are actively developing based off a internal list and goal, so we may not approve PRs that add features that are already under-development or deviates from our vision.
 
 ## License

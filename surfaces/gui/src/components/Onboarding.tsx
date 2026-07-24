@@ -122,7 +122,9 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
         {step === 0 && (
           <section data-testid="ob-step-model" className="flex-1 min-h-0 flex flex-col">
             {/* Persistent header — stays put while the region below swaps (§39). */}
-            <h1 className="text-[19px] font-semibold">Welcome to OpenWorker<span className="beta-tag">BETA</span></h1>
+            <h1 className="text-[19px] font-semibold">
+              Welcome to OpenWorker Subscription Bridge<span className="beta-tag">COMMUNITY FORK</span>
+            </h1>
             <p className="text-[13px] text-muted mt-0.5 mb-4">
               Pick a model provider to get started. Use your own API key, a local model, or an
               existing ChatGPT or Claude subscription. Credentials stay on this Mac; prompts go to your chosen provider.
@@ -241,7 +243,7 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                   <span className="block text-[13px] font-semibold text-ink mb-0.5">
                     Sign in for one-click connections
                   </span>
-                  OpenWorker handles the OAuth for 20+ tools — no dev consoles, no pasted keys.
+                  Optional OpenWorker Cloud connections handle OAuth for 20+ tools — no dev consoles, no pasted keys.
                   Tokens stay on this Mac.
                 </span>
                 {signinPhase ? (

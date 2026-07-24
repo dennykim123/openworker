@@ -2,7 +2,7 @@
 
 This adapter deliberately stays on the official local Codex runtime boundary: it
 invokes the installed `codex` executable in ephemeral, read-only mode and never
-reads token files or imports bearer tokens into OpenWorker.
+reads token files or imports bearer tokens into Subscription Bridge.
 """
 
 from __future__ import annotations
@@ -221,7 +221,7 @@ def _build_prompt(
 ) -> str:
     return "\n".join(
         [
-            f"You are a JSON adapter between OpenWorker and {runtime_name}.",
+            f"You are a JSON adapter between OpenWorker Subscription Bridge and {runtime_name}.",
             "Never use shell, web, file, MCP, or any native Codex tools.",
             "Never modify the computer or execute the supplied tools yourself.",
             "Return only JSON matching the provided schema.",

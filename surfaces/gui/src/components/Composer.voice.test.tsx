@@ -102,3 +102,18 @@ describe("Composer voice input (§37)", () => {
     expect(screen.getByLabelText("Start dictation").hasAttribute("disabled")).toBe(false);
   });
 });
+
+describe("Composer connection gating", () => {
+  it("keeps an Enter-submitted draft while the session socket is still connecting", () => {
+    delete (globalThis as any).__TAURI__;
+    const onSend = vi.fn();
+    render(<Composer {...props({ connected: false, onSend })} />);
+
+    const box = screen.getByPlaceholderText(/Ask the coworker/) as HTMLTextAreaElement;
+    fireEvent.change(box, { target: { value: "keep this draft" } });
+    fireEvent.keyDown(box, { key: "Enter", code: "Enter" });
+
+    expect(onSend).not.toHaveBeenCalled();
+    expect(box.value).toBe("keep this draft");
+  });
+});

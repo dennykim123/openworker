@@ -260,7 +260,7 @@ function VoiceInputSection() {
       />
 
       {!desktop ? (
-        <div className={CARD + " p-4 text-[13px] text-muted"}>Voice Input setup is available in the OpenWorker desktop app.</div>
+        <div className={CARD + " p-4 text-[13px] text-muted"}>Voice Input setup is available in the OpenWorker Subscription Bridge desktop app.</div>
       ) : (
         <div className="space-y-4">
           <div className="rounded-xl border border-green-200 bg-green-50/70 px-4 py-3 text-[12.5px] text-green-800">
@@ -406,7 +406,7 @@ function AppearanceSection() {
 
   return (
     <section>
-      <PanelHead title="General" sub="How OpenWorker looks and behaves on this machine." />
+      <PanelHead title="General" sub="How Subscription Bridge looks and behaves on this machine." />
 
       <div className={CARD + " p-4 mb-4"}>
         <div className={FIELD_LABEL}>Theme</div>
@@ -431,7 +431,7 @@ function AppearanceSection() {
             <input type="checkbox" className="mt-0.5" checked={autostart} onChange={(e) => toggleAuto(e.target.checked)} />
             <span>
               <span className="block text-[13px] text-ink">Open at login</span>
-              <span className="block text-[12px] text-muted">Launch OpenWorker automatically when you sign in.</span>
+              <span className="block text-[12px] text-muted">Launch OpenWorker Subscription Bridge automatically when you sign in.</span>
             </span>
           </label>
           <label className="flex items-start gap-3 py-2">
@@ -511,7 +511,7 @@ function UpdateInline() {
             ? "You're on the latest version."
             : state === "error"
               ? "Couldn't check right now — try again later."
-              : "Downloading — OpenWorker restarts by itself when it's ready."}
+              : "Downloading — Subscription Bridge restarts by itself when it's ready."}
         </span>
       )}
     </span>
@@ -692,7 +692,7 @@ function FilesCard() {
           <input
             className={INPUT}
             type="text"
-            placeholder="~/OpenWorker"
+            placeholder="~/OpenWorker Subscription Bridge"
             value={scratchDraft}
             spellCheck={false}
             autoComplete="off"

@@ -256,7 +256,10 @@ export function Composer(props: Props) {
 
   const submit = () => {
     const t = text.trim();
-    if ((!t && attachments.length === 0) || props.running || dictation?.recording || dictationBusy) return;
+    // Enter bypasses the disabled Send button, so guard the connection here too. Without this,
+    // a fast typist can submit during session startup: the draft is cleared and a local bubble
+    // appears, but there is no open socket to carry the message.
+    if (!props.connected || (!t && attachments.length === 0) || props.running || dictation?.recording || dictationBusy) return;
     // No model connected: keep the draft (don't drop it) and send the user to setup instead.
     if (needsModel) {
       props.onConnectModel?.();
