@@ -20,6 +20,10 @@ from typing import Any, Callable, Optional
 
 from .anthropic_provider import AnthropicProvider
 from .base import ProviderClient
+from .codex_subscription_provider import (
+    CodexSubscriptionProvider,
+    verify_codex_subscription,
+)
 from .gemini_provider import GeminiProvider
 from .openai_provider import OpenAIProvider
 
@@ -67,6 +71,7 @@ class ProviderDescriptor:
     env_key: Optional[str] = (
         None  # env var that can supply the API key (e.g. ANTHROPIC_API_KEY)
     )
+    auth_type: str = "api_key"  # api_key | local | codex_login
     # One-line note under the provider title (e.g. "Connects through X's OpenAI-compatible API").
     blurb: str = ""
 
@@ -77,6 +82,7 @@ class ProviderDescriptor:
             "needs_key": self.needs_key,
             "fields": [f.to_dict() for f in self.fields],
             "recommended_model": self.recommended_model,
+            "auth_type": self.auth_type,
             "blurb": self.blurb,
         }
 
@@ -131,6 +137,12 @@ def _build_ollama(profile: dict[str, Any], secrets: Any) -> ProviderClient:
     # string, so we pass a placeholder. `base_url` comes from the stored profile (or the default).
     base_url = _normalize_ollama_url((profile or {}).get("base_url"))
     return OpenAIProvider(api_key="ollama", base_url=base_url)
+
+
+def _build_codex(profile: dict[str, Any], secrets: Any) -> ProviderClient:
+    del secrets
+    codex_bin = ((profile or {}).get("codex_bin") or "").strip() or None
+    return CodexSubscriptionProvider(codex_bin=codex_bin)
 
 
 def _openai_compat(vendor: str, default_base_url: str, env_key: Optional[str] = None):
@@ -252,6 +264,25 @@ DESCRIPTORS: list[ProviderDescriptor] = [
         recommended_model="gemini-3.6-flash",
         env_key="GEMINI_API_KEY",
     ),
+    ProviderDescriptor(
+        name="codex",
+        title="ChatGPT Subscription (Codex)",
+        needs_key=False,
+        fields=[
+            ProviderField(
+                "codex_bin",
+                "Codex executable (optional)",
+                secret=False,
+                required=False,
+                placeholder="/Applications/ChatGPT.app/Contents/Resources/codex",
+                help="Leave blank to auto-detect the official Codex runtime from ChatGPT or your PATH.",
+            )
+        ],
+        build=_build_codex,
+        recommended_model="default",
+        auth_type="codex_login",
+        blurb="Uses the local Codex runtime and your existing ChatGPT sign-in instead of an API key.",
+    ),
     # OpenAI-compatible vendors, listed as first-class providers so users don't need to know the
     # "point the OpenAI slot at a different endpoint" trick (owner call, 2026-07-04). Each keeps
     # its own key profile; the endpoint is prefilled and editable (regional variants in `help`).
@@ -343,6 +374,7 @@ DESCRIPTORS: list[ProviderDescriptor] = [
         # Reliable native tool-calling + strong coding quality (verified). Pull with
         # `ollama pull qwen3-coder:30b`.
         recommended_model="qwen3-coder:30b",
+        auth_type="local",
     ),
 ]
 
@@ -390,6 +422,7 @@ def verify_provider_key(
     *,
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
+    codex_bin: Optional[str] = None,
     timeout: float = 10.0,
 ) -> dict[str, Any]:
     """Validate a provider's credentials with one cheap, read-only call (list models) — the same
@@ -413,6 +446,8 @@ def verify_provider_key(
                 params={"key": key},
                 timeout=timeout,
             )
+        elif name == "codex":
+            return verify_codex_subscription(codex_bin, timeout=timeout)
         elif name == "ollama":
             base = _normalize_ollama_url(base_url)
             resp = httpx.get(base.rstrip("/") + "/models", timeout=timeout)

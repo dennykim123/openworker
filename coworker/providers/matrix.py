@@ -25,6 +25,9 @@ from .base import ModelCapabilities
 _AGENTIC = ModelCapabilities(
     tools=True, vision=False, parallel_tool_calls=True, streaming=True
 )
+_CODEX = ModelCapabilities(
+    tools=True, vision=False, pdf=False, parallel_tool_calls=False, streaming=False
+)
 # The native three (OpenAI, Anthropic, Gemini) all take PDFs directly; every
 # OpenAI-compatible vendor and reseller in the matrix does not (their chat APIs have
 # no inline file part — checked 2026-07-17), so those fall back via pdf_support.py.
@@ -41,6 +44,7 @@ class ModelEntry:
 
 MATRIX: dict[str, ModelEntry] = {
     # -- first-party ------------------------------------------------------------
+    "codex:default": ModelEntry("ChatGPT Subscription · Codex", _CODEX),
     # GPT-5.6 (2026-07-09): number = generation, Sol/Terra/Luna = capability tiers.
     # Bare "gpt-5.6" aliases to Sol server-side; we list the explicit tier ids only.
     # Rolling out — accounts without access get a friendly error (providers/errors.py).

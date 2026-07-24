@@ -33,6 +33,14 @@ export const KEY_HELP: Record<string, { url: string; label: string }> = {
 
 export type Verify = { state: "idle" | "testing" | "ok" | "error"; msg?: string };
 
+function isCodexProvider(info?: ProviderInfo | null): boolean {
+  return info?.auth_type === "codex_login" || info?.name === "codex";
+}
+
+function isLocalProvider(info?: ProviderInfo | null): boolean {
+  return info?.auth_type === "local" || info?.name === "ollama";
+}
+
 /** Brand chip: always a light plate so multicolor marks read on any theme. */
 export function ProviderMark({ name, title, size = 32 }: { name: string; title: string; size?: number }) {
   const url = PROVIDER_LOGOS[name];
@@ -99,7 +107,7 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   const [dirty, setDirty] = useState(false);
   const [showEndpoint, setShowEndpoint] = useState(false);
   const [verify, setVerify] = useState<Verify>({ state: "idle" });
-  // Keyless providers (Ollama) report configured without proving anything runs —
+  // Purely local providers (today: Ollama) report configured without proving anything runs —
   // a passing Detect this session is what marks them live.
   const [keylessOk, setKeylessOk] = useState<Set<string>>(new Set());
   // Unsaved per-provider input survives switching cards (owner complaint 2026-07-16).
@@ -121,7 +129,9 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   }, []);
 
   const info = providers.find((p) => p.name === sel);
-  const credentialed = !!info?.configured && !!info?.needs_key;
+  // Codex owns its ChatGPT OAuth session outside OpenWorker. It is connected when the
+  // sidecar confirms the official local runtime is logged in, even though no API key is saved.
+  const credentialed = !!info?.configured && (!!info?.needs_key || isCodexProvider(info));
 
   const openProvider = (name: string) => {
     const p = providers.find((x) => x.name === name);
@@ -156,8 +166,11 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
       setVerify({ state: "error", msg: res.error || "couldn't verify" });
       return false;
     }
-    if (dirty || !info?.configured) await setProvider(sel, fields).catch(() => {});
-    if (!info?.needs_key) setKeylessOk((s) => new Set(s).add(sel));
+    // A detected Codex login still needs one explicit setup save so its recommended
+    // subscription model is added to the composer, even though no credential is stored.
+    if (dirty || !info?.configured || isCodexProvider(info))
+      await setProvider(sel, fields).catch(() => {});
+    if (isLocalProvider(info)) setKeylessOk((s) => new Set(s).add(sel));
     setVerify({ state: "ok" });
     setDirty(false);
     setDrafts((d) => ({ ...d, [sel]: {} }));
@@ -212,6 +225,16 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   };
 
   const statusFor = (p: ProviderInfo, o?: { lastUsed?: boolean }) => {
+    if (isCodexProvider(p)) {
+      const used = o?.lastUsed ? relTime(p.last_used_at) : null;
+      return p.configured ? (
+        <span className="block text-[11.5px] text-ok font-medium truncate">
+          ✓ ChatGPT subscription{used ? <span className="text-muted font-normal"> · used {used}</span> : ""}
+        </span>
+      ) : (
+        <span className="block text-[11.5px] text-faint truncate">Run Check to connect ChatGPT</span>
+      );
+    }
     if (p.configured && p.needs_key) {
       const used = o?.lastUsed ? relTime(p.last_used_at) : null;
       return (
@@ -220,7 +243,7 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
         </span>
       );
     }
-    if (!p.needs_key)
+    if (isLocalProvider(p))
       return (
         <span className="block text-[11.5px] text-faint truncate">
           {keylessOk.has(p.name) ? <span className="text-ok font-medium">✓ Running</span> : "No key needed"}
@@ -385,7 +408,7 @@ export function ProviderForm({
                   disabled={ps.verify.state === "testing" || (f.secret && !ps.secretFilled && !ps.credentialed)}
                   data-testid={`${tp}-test`}
                 >
-                  {ps.verify.state === "testing" ? "…" : info?.needs_key ? "Test" : "Detect"}
+                  {ps.verify.state === "testing" ? "…" : info?.needs_key ? "Test" : isCodexProvider(info) ? "Check" : "Detect"}
                 </button>
               )}
             </div>
@@ -406,7 +429,13 @@ export function ProviderForm({
           — takes about a minute.
         </p>
       )}
-      {info && !info.needs_key && (
+      {isCodexProvider(info) && (
+        <p className="text-[11.5px] text-faint mt-2">
+          Uses the ChatGPT subscription already signed in through the official Codex app on this Mac.
+          No API key or OAuth token is copied into OpenWorker.
+        </p>
+      )}
+      {info && isLocalProvider(info) && (
         <p className="text-[11.5px] text-faint mt-2">
           No API key needed — Ollama runs models on this Mac.{" "}
           <button

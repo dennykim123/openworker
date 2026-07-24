@@ -1211,6 +1211,7 @@ export interface ProviderInfo {
   name: string;
   title: string;
   needs_key: boolean;
+  auth_type?: string;
   fields: ProviderField[];
   configured: boolean;
   values: Record<string, string>; // non-secret stored values (e.g. base_url), for prefilling
@@ -1771,4 +1772,3 @@ export class Session {
     this.ws.close();
   }
 }
-

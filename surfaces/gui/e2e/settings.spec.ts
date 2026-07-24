@@ -47,9 +47,15 @@ test("Models: provider gallery states; vendor form previews models", async ({ pa
 
   // Card states from the fixtures: openai configured+used, anthropic configured, zai not.
   await expect(page.getByTestId("set-provider-openai")).toContainText("✓ Connected · used 2h ago");
+  await expect(page.getByTestId("set-provider-codex")).toContainText("✓ ChatGPT subscription");
   await expect(page.getByTestId("set-provider-anthropic")).toContainText("✓ Connected");
   await expect(page.getByTestId("set-provider-zai")).toContainText("Not set up");
   await expect(page.getByTestId("set-provider-ollama")).toContainText("No key needed");
+
+  await page.getByTestId("set-provider-codex").click();
+  await expect(page.getByText(/No API key or OAuth token is copied/)).toBeVisible();
+  await expect(page.getByTestId("set-remove-key")).toHaveCount(0);
+  await page.getByTestId("set-back").click();
 
   // The composer-picker card lists the curated models with provider tags.
   const picker = page.getByTestId("composer-picker");

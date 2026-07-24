@@ -23,15 +23,17 @@ test("provider gallery: cards wear their state; Next arms off stored credentials
   // Every card carries its own status with zero clicks (the 2026-07-16 confusion —
   // "is OpenAI already connected?" — is answered by the gallery itself).
   await expect(page.getByTestId("ob-provider-openai")).toContainText("✓ Connected");
+  await expect(page.getByTestId("ob-provider-codex")).toContainText("✓ ChatGPT subscription");
   await expect(page.getByTestId("ob-provider-anthropic")).toContainText("✓ Connected");
   await expect(page.getByTestId("ob-provider-zai")).toContainText("Not set up");
   await expect(page.getByTestId("ob-provider-ollama")).toContainText("No key needed");
-  // Recognition-first order: anthropic before openai before the OpenAI-compat tail.
+  // Recognition-first order: anthropic, subscription, API, then the compatibility tail.
   const names = await page
     .getByTestId("ob-provider-gallery")
     .locator("[data-testid^=ob-provider-]")
     .evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
   expect(names.indexOf("ob-provider-anthropic")).toBeLessThan(names.indexOf("ob-provider-openai"));
+  expect(names.indexOf("ob-provider-codex")).toBeLessThan(names.indexOf("ob-provider-openai"));
   expect(names.indexOf("ob-provider-openai")).toBeLessThan(names.indexOf("ob-provider-zai"));
 
   // A configured provider already arms Next — no form visit required.

@@ -103,7 +103,7 @@ export function ModelsTab() {
         ps={ps}
         tp="set"
         footer={
-          ps.credentialed ? (
+          ps.credentialed && ps.sel !== "codex" ? (
             <button
               className="text-[12.5px] text-danger/80 hover:text-danger hover:underline underline-offset-2"
               data-testid="set-remove-key"
@@ -148,7 +148,7 @@ export function ModelsTab() {
           <div className="mt-6" data-testid="model-preview">
             <div className={SEC_H + " mb-1.5"}>Included models</div>
             <p className="text-[12px] text-muted mb-2.5 leading-relaxed">
-              Curated, agent-capable models this provider serves — add your key above to enable them.
+              Curated, agent-capable models this provider serves — finish the setup above to enable them.
             </p>
             <div className="space-y-1">
               {(info?.suggested_models || []).map((m) => {

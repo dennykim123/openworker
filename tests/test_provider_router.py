@@ -310,6 +310,22 @@ def test_manager_provider_config(tmp_path, monkeypatch):
     assert mgr.set_provider("nope", {})["ok"] is False  # unknown provider rejected
 
 
+def test_manager_codex_provider_tracks_live_subscription(tmp_path, monkeypatch):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setattr(
+        "coworker.server.manager.verify_provider_key",
+        lambda name, **kwargs: {"ok": name == "codex"},
+    )
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+    mgr.set_provider("codex", {})
+    provs = {p["name"]: p for p in mgr.get_providers()}
+    assert provs["codex"]["configured"] is True
+    assert provs["codex"]["auth_type"] == "codex_login"
+    assert "default" in provs["codex"]["suggested_models"]
+
+
 def test_manager_curated_models(tmp_path, monkeypatch):
     """No seed list: the picker is the curated matrix filtered to key-holding providers,
     plus user-added custom ids. A fresh install shows only the (not-yet-usable) default.
@@ -323,6 +339,7 @@ def test_manager_curated_models(tmp_path, monkeypatch):
     from coworker.server.manager import SessionManager
 
     mgr = SessionManager(data_dir=tmp_path)
+    monkeypatch.setattr(mgr, "_ollama_alive", lambda: True)
     # no provider keys → nothing but the always-selectable default
     assert mgr.get_settings()["models"] == [mgr.model]
 
@@ -363,6 +380,7 @@ def test_set_provider_auto_adds_recommended_when_pulled(tmp_path, monkeypatch):
     from coworker.server.manager import SessionManager
 
     mgr = SessionManager(data_dir=tmp_path)
+    monkeypatch.setattr(mgr, "_ollama_alive", lambda: True)
     monkeypatch.setattr(  # pretend the recommended model is pulled
         mgr,
         "_suggested_models",
@@ -463,6 +481,22 @@ def test_first_configured_provider_wins_default(tmp_path, monkeypatch):
     # but a default that already works is never stolen by the next provider
     mgr.set_provider("gemini", {"api_key": "AIza-x"})
     assert mgr.model == "anthropic:claude-fable-5"
+
+
+def test_codex_can_become_the_first_working_default(tmp_path, monkeypatch):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    for var in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(
+        "coworker.server.manager.verify_provider_key",
+        lambda name, **kwargs: {"ok": name == "codex"},
+    )
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+    mgr.set_provider("codex", {})
+    assert mgr.model == "codex:default"
+
 
 
 def test_surface_visibility(tmp_path, monkeypatch):

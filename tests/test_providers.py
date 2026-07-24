@@ -107,6 +107,7 @@ def test_settings_forwarded():
 def test_capabilities_known_models():
     assert capabilities_for("gpt-5.5").tools is True
     assert capabilities_for("openai:gpt-5.5").vision is True  # provider prefix stripped
+    assert capabilities_for("codex:gpt-5.6-sol").streaming is False
     assert capabilities_for("o3-mini").parallel_tool_calls is False
     assert capabilities_for("deepseek-chat").tools is True
 
@@ -390,6 +391,7 @@ def test_matrix_labels_and_custom_model_fallback():
     from coworker.providers.matrix import MATRIX, model_labels
 
     labels = model_labels()
+    assert labels["codex:default"] == "ChatGPT Subscription · Codex"
     assert labels["together:zai-org/GLM-5.2"] == "GLM-5.2 · via Together"
     assert labels["zai:glm-5.2"] == "GLM-5.2 · Z AI"
     # Deliberately small: agent-capable current models only (owner call, 2026-07-04).

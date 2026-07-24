@@ -29,6 +29,11 @@ def capabilities_for(model: str) -> ModelCapabilities:
             tools=True, vision=False, parallel_tool_calls=False, streaming=True
         )
 
+    if provider == "codex":
+        return ModelCapabilities(
+            tools=True, vision=False, pdf=False, parallel_tool_calls=False, streaming=False
+        )
+
     # Claude / Gemini (both native): tools + vision + parallel tool calls + streaming. The
     # engine executes parallel calls sequentially and each converter folds the results into
     # the single next user message — exactly what both APIs require.

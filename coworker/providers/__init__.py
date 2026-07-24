@@ -7,6 +7,11 @@ from .base import (
     ToolCall,
 )
 from .capabilities import capabilities_for
+from .codex_subscription_provider import (
+    CodexSubscriptionProvider,
+    resolve_codex_bin,
+    verify_codex_subscription,
+)
 from .gemini_provider import GeminiProvider
 from .openai_provider import OpenAIProvider, resolve_api_key
 from .registry import (
@@ -28,9 +33,12 @@ __all__ = [
     "StreamChunk",
     "ToolCall",
     "AnthropicProvider",
+    "CodexSubscriptionProvider",
     "GeminiProvider",
     "OpenAIProvider",
     "resolve_api_key",
+    "resolve_codex_bin",
+    "verify_codex_subscription",
     "capabilities_for",
     "ProviderRouter",
     "ProviderDescriptor",

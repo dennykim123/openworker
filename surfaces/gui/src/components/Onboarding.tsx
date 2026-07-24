@@ -13,7 +13,7 @@ import { ProviderCards, ProviderForm, useProviderSetup } from "../providers/Prov
 import { Spinner } from "./AutomationQuickstart";
 
 // First-run onboarding (UX-DECISIONS §24 → §29 → §39): model → your tools → go.
-// §39 (owner design, 2026-07-18): step 1 is a PROVIDER GALLERY — 13 real brand
+// §39 (owner design, 2026-07-18): step 1 is a PROVIDER GALLERY — real brand
 // marks, two per row, each card wearing its own state — and step 2 is a
 // two-state tools page whose post-sign-in body is a mini connector gallery with
 // live one-click connects. Both steps share one frame rule: the header and
@@ -45,7 +45,10 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
   const [skipConfirm, setSkipConfirm] = useState(false);
 
   const anyReady =
-    ps.providers.some((p) => p.configured && p.needs_key) || ps.keylessOk.size > 0;
+    ps.providers.some(
+      (p) => p.configured && (p.needs_key || p.auth_type === "codex_login"),
+    ) ||
+    ps.keylessOk.size > 0;
   // In the form with typed-but-untested input, Next verifies+saves first (tester
   // catch 2026-07-12: a manual Test-then-Continue two-step reads as a puzzle).
   const nextFromForm = !!ps.sel && ps.dirty && ps.secretFilled;
@@ -121,8 +124,8 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
             {/* Persistent header — stays put while the region below swaps (§39). */}
             <h1 className="text-[19px] font-semibold">Welcome to OpenWorker<span className="beta-tag">BETA</span></h1>
             <p className="text-[13px] text-muted mt-0.5 mb-4">
-              Pick a model provider to get started — OpenWorker runs on your own key, and your
-              key and your data stay on this Mac.
+              Pick a model provider to get started. Use your own API key, a local model, or an
+              existing ChatGPT subscription. Credentials stay on this Mac; prompts go to your chosen provider.
             </p>
 
             {!ps.sel ? (

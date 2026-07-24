@@ -90,6 +90,17 @@ def test_verify_ollama_uses_v1_models_no_key(monkeypatch):
     assert "headers" not in cap  # keyless
 
 
+def test_verify_codex_delegates_to_local_login_check(monkeypatch):
+    monkeypatch.setattr(
+        "coworker.providers.registry.verify_codex_subscription",
+        lambda codex_bin=None, timeout=10.0: {"ok": True, "codex_bin": codex_bin or "/tmp/codex"},
+    )
+    assert verify_provider_key("codex", codex_bin="/tmp/codex") == {
+        "ok": True,
+        "codex_bin": "/tmp/codex",
+    }
+
+
 def test_verify_network_error_is_clean(monkeypatch):
     _patch_get(monkeypatch, raise_exc=ConnectionError("boom"))
     res = verify_provider_key("openai", api_key="sk-x")

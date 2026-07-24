@@ -1,12 +1,29 @@
 # OpenWorker
 
-**[openworker.com](https://openworker.com)** · [Download](#download) · [Issues](https://github.com/andrewyng/openworker/issues)
+**[Upstream project](https://openworker.com)** · [ChatGPT subscription fork](#chatgpt-subscription-fork) · [Issues](https://github.com/dennykim123/openworker/issues)
 
-> **Beta** - OpenWorker is in open beta: fully usable, updates itself, and we're actively polishing rough edges. [Issues](https://github.com/andrewyng/openworker/issues) welcome.
+> **Experimental community fork** - The ChatGPT subscription provider is usable but is not part of the upstream release or its auto-update channel. [Fork issues](https://github.com/dennykim123/openworker/issues) are welcome.
 
 **AI that gets your everyday tasks done.** OpenWorker is an open-source AI coworker that lives on your desktop and delivers **finished work**, not just chat: a polished document, a Slack reply with the numbers, an updated calendar, a triaged inbox.
 
 It runs on your machine and doesn't lock you into any model: bring your own API key for OpenAI, Anthropic, Google, or an open-weight provider, or run fully local with Ollama. Your data leaves your machine only through the model and integrations *you* choose.
+
+## ChatGPT subscription fork
+
+This community fork adds **ChatGPT subscription access through the official local Codex runtime**. It is not an official OpenWorker or OpenAI release.
+
+- No OpenAI API key is required for this provider.
+- OpenWorker does not read Codex token files or copy OAuth tokens. It asks the installed `codex` executable to run in ephemeral, read-only mode.
+- Model requests still leave your Mac for OpenAI, and normal ChatGPT/Codex plan limits and terms apply.
+- OpenWorker remains responsible for its own tools and approval prompts; the Codex subprocess is instructed not to operate native tools itself.
+
+Requirements:
+
+1. A ChatGPT plan with Codex access.
+2. The official Codex CLI, or the Codex runtime bundled with the ChatGPT desktop app.
+3. `codex login status` must report `Logged in using ChatGPT` rather than an API key.
+
+After launching this fork, open **Models**, choose **ChatGPT Subscription (Codex)**, and click **Check**. The model picker will then include **ChatGPT Subscription · Codex**.
 
 [![How OpenWorker works](docs/assets/how-it-works.png)](https://openworker.com)
 
@@ -18,7 +35,7 @@ It runs on your machine and doesn't lock you into any model: bring your own API 
 [**⬇ Windows 10/11 (x64)**](https://download.openworker.com/windows)
 <sub>builds are not yet code-signed, so SmartScreen will warn; signing is in progress</sub>
 
-Open the app, add a model key (or point it at Ollama), and ask for something real.
+These links install the official upstream build and do **not** include this fork's ChatGPT subscription provider. To use the fork today, follow [Run from source](#run-from-source).
 
 ## How it works
 
@@ -50,9 +67,9 @@ Under the hood:
 
 ## Bring your own model
 
-Model access is yours: pick a provider, paste your key, switch anytime. Supported out of the box:
+Model access is yours: pick a provider and switch anytime. This fork supports:
 
-**OpenAI · Anthropic · Google Gemini · Inkling (Thinking Machines) · GLM (Z.ai) · DeepSeek · Kimi (Moonshot) · Qwen · MiniMax · Mistral · Grok (xAI)** - plus open-weight models via **Together** and **Fireworks**, and fully local models via **Ollama**.
+**ChatGPT subscription through Codex · OpenAI API · Anthropic · Google Gemini · Inkling (Thinking Machines) · GLM (Z.ai) · DeepSeek · Kimi (Moonshot) · Qwen · MiniMax · Mistral · Grok (xAI)** - plus open-weight models via **Together** and **Fireworks**, and fully local models via **Ollama**.
 
 A curated model list marks what we've verified for tool-calling work. Adding any model string works at your own risk.
 
@@ -65,7 +82,7 @@ OpenWorker is local-first. Everything lives on your machine: the agent loop, you
 Prerequisites: Python 3.10+, Node 20+, and (for the desktop shell) the Rust toolchain via [rustup](https://rustup.rs/).
 
 ```shell
-git clone https://github.com/andrewyng/openworker
+git clone https://github.com/dennykim123/openworker
 cd openworker
 
 # 1. One-time bootstrap - creates the Python venv at .venv
@@ -105,7 +122,7 @@ OpenWorker was originally developed inside the aisuite repository before moving 
 
 ## Contributing
 
-Contributions and bug reports are welcome - open an [issue](https://github.com/andrewyng/openworker/issues) or a pull request. The app updates itself, so fixes reach installs quickly.
+Contributions and bug reports for this fork are welcome - open an [issue](https://github.com/dennykim123/openworker/issues) or a pull request. For the original project, use the [upstream repository](https://github.com/andrewyng/openworker).
 For any PR, please attach screenshots of what was broken and how it is fixed now. We will shortly add features that you can contribute to.
 Please note that we are actively developing based off a internal list and goal, so we may not approve PRs that add features that are already under-development or deviates from our vision.
 
