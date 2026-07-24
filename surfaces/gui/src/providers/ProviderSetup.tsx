@@ -33,8 +33,12 @@ export const KEY_HELP: Record<string, { url: string; label: string }> = {
 
 export type Verify = { state: "idle" | "testing" | "ok" | "error"; msg?: string };
 
-function isCodexProvider(info?: ProviderInfo | null): boolean {
-  return info?.auth_type === "codex_login" || info?.name === "codex";
+function isSubscriptionProvider(info?: ProviderInfo | null): boolean {
+  return !!info && (info.auth_type?.endsWith("_login") || ["codex", "claude_subscription"].includes(info.name));
+}
+
+function subscriptionLabel(info?: ProviderInfo | null): string {
+  return info?.name === "claude_subscription" ? "Claude subscription" : "ChatGPT subscription";
 }
 
 function isLocalProvider(info?: ProviderInfo | null): boolean {
@@ -131,7 +135,7 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   const info = providers.find((p) => p.name === sel);
   // Codex owns its ChatGPT OAuth session outside OpenWorker. It is connected when the
   // sidecar confirms the official local runtime is logged in, even though no API key is saved.
-  const credentialed = !!info?.configured && (!!info?.needs_key || isCodexProvider(info));
+  const credentialed = !!info?.configured && (!!info?.needs_key || isSubscriptionProvider(info));
 
   const openProvider = (name: string) => {
     const p = providers.find((x) => x.name === name);
@@ -168,7 +172,7 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
     }
     // A detected Codex login still needs one explicit setup save so its recommended
     // subscription model is added to the composer, even though no credential is stored.
-    if (dirty || !info?.configured || isCodexProvider(info))
+    if (dirty || !info?.configured || isSubscriptionProvider(info))
       await setProvider(sel, fields).catch(() => {});
     if (isLocalProvider(info)) setKeylessOk((s) => new Set(s).add(sel));
     setVerify({ state: "ok" });
@@ -225,14 +229,14 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   };
 
   const statusFor = (p: ProviderInfo, o?: { lastUsed?: boolean }) => {
-    if (isCodexProvider(p)) {
+    if (isSubscriptionProvider(p)) {
       const used = o?.lastUsed ? relTime(p.last_used_at) : null;
       return p.configured ? (
         <span className="block text-[11.5px] text-ok font-medium truncate">
-          ✓ ChatGPT subscription{used ? <span className="text-muted font-normal"> · used {used}</span> : ""}
+          ✓ {subscriptionLabel(p)}{used ? <span className="text-muted font-normal"> · used {used}</span> : ""}
         </span>
       ) : (
-        <span className="block text-[11.5px] text-faint truncate">Run Check to connect ChatGPT</span>
+        <span className="block text-[11.5px] text-faint truncate">Run Check to connect {subscriptionLabel(p).replace(" subscription", "")}</span>
       );
     }
     if (p.configured && p.needs_key) {
@@ -408,7 +412,7 @@ export function ProviderForm({
                   disabled={ps.verify.state === "testing" || (f.secret && !ps.secretFilled && !ps.credentialed)}
                   data-testid={`${tp}-test`}
                 >
-                  {ps.verify.state === "testing" ? "…" : info?.needs_key ? "Test" : isCodexProvider(info) ? "Check" : "Detect"}
+                  {ps.verify.state === "testing" ? "…" : info?.needs_key ? "Test" : isSubscriptionProvider(info) ? "Check" : "Detect"}
                 </button>
               )}
             </div>
@@ -429,9 +433,9 @@ export function ProviderForm({
           — takes about a minute.
         </p>
       )}
-      {isCodexProvider(info) && (
+      {isSubscriptionProvider(info) && (
         <p className="text-[11.5px] text-faint mt-2">
-          Uses the ChatGPT subscription already signed in through the official Codex app on this Mac.
+          Uses the {subscriptionLabel(info)} already signed in through the official local {info?.name === "claude_subscription" ? "Claude Code" : "Codex"} runtime.
           No API key or OAuth token is copied into OpenWorker.
         </p>
       )}

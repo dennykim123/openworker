@@ -7,6 +7,11 @@ from .base import (
     ToolCall,
 )
 from .capabilities import capabilities_for
+from .claude_subscription_provider import (
+    ClaudeSubscriptionProvider,
+    resolve_claude_bin,
+    verify_claude_subscription,
+)
 from .codex_subscription_provider import (
     CodexSubscriptionProvider,
     resolve_codex_bin,
@@ -33,12 +38,15 @@ __all__ = [
     "StreamChunk",
     "ToolCall",
     "AnthropicProvider",
+    "ClaudeSubscriptionProvider",
     "CodexSubscriptionProvider",
     "GeminiProvider",
     "OpenAIProvider",
     "resolve_api_key",
+    "resolve_claude_bin",
     "resolve_codex_bin",
     "verify_codex_subscription",
+    "verify_claude_subscription",
     "capabilities_for",
     "ProviderRouter",
     "ProviderDescriptor",

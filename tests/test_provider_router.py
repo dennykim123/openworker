@@ -326,6 +326,22 @@ def test_manager_codex_provider_tracks_live_subscription(tmp_path, monkeypatch):
     assert "default" in provs["codex"]["suggested_models"]
 
 
+def test_manager_claude_provider_tracks_live_subscription(tmp_path, monkeypatch):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setattr(
+        "coworker.server.manager.verify_provider_key",
+        lambda name, **kwargs: {"ok": name == "claude_subscription"},
+    )
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+    mgr.set_provider("claude_subscription", {})
+    provs = {p["name"]: p for p in mgr.get_providers()}
+    assert provs["claude_subscription"]["configured"] is True
+    assert provs["claude_subscription"]["auth_type"] == "claude_login"
+    assert "default" in provs["claude_subscription"]["suggested_models"]
+
+
 def test_manager_curated_models(tmp_path, monkeypatch):
     """No seed list: the picker is the curated matrix filtered to key-holding providers,
     plus user-added custom ids. A fresh install shows only the (not-yet-usable) default.

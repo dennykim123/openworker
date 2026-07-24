@@ -325,8 +325,10 @@ const PRIMARY_ROOT = { path: "/Users/test/OpenWorker/launch-note", writable: tru
 const baseName = (p: string) => p.split("/").filter(Boolean).pop() || p;
 
 const PROVIDERS = [
+  // claude_subscription: external Claude.ai subscription login through Claude Code.
+  { name: "claude_subscription", title: "Claude Subscription (Claude Code)", needs_key: false, auth_type: "claude_login", blurb: "Uses your existing Claude.ai subscription through Claude Code.", fields: [{ key: "claude_bin", label: "Claude Code executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/opt/homebrew/bin/claude" }], configured: true, values: {}, suggested_models: ["default"], key_set_at: null, last_used_at: null },
   // codex: external ChatGPT subscription login, detected through the official local runtime.
-  { name: "codex", title: "ChatGPT subscription (Codex)", needs_key: false, blurb: "Uses your existing ChatGPT subscription through the official Codex app.", fields: [{ key: "codex_bin", label: "Codex executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/Applications/ChatGPT.app/Contents/Resources/codex" }], configured: true, values: {}, suggested_models: ["default"], key_set_at: null, last_used_at: null },
+  { name: "codex", title: "ChatGPT subscription (Codex)", needs_key: false, auth_type: "codex_login", blurb: "Uses your existing ChatGPT subscription through the official Codex app.", fields: [{ key: "codex_bin", label: "Codex executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/Applications/ChatGPT.app/Contents/Resources/codex" }], configured: true, values: {}, suggested_models: ["default"], key_set_at: null, last_used_at: null },
   // openai: configured + used (drives the "Last used" sub-line and the status dot).
   { name: "openai", title: "OpenAI", needs_key: true, fields: [{ key: "api_key", label: "OpenAI API key", secret: true, required: true, help: "", placeholder: "sk-…" }], configured: true, values: {}, suggested_models: ["gpt-5.5"], key_set_at: "2026-06-12", last_used_at: Math.floor(Date.now() / 1000) - 7200 },
   // anthropic: configured but never used ("Not used yet").

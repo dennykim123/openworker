@@ -213,10 +213,15 @@ def _tool_specs(tools: Optional[list[dict[str, Any]]]) -> list[dict[str, Any]]:
     return specs
 
 
-def _build_prompt(messages: list[dict[str, Any]], tools: Optional[list[dict[str, Any]]]) -> str:
+def _build_prompt(
+    messages: list[dict[str, Any]],
+    tools: Optional[list[dict[str, Any]]],
+    *,
+    runtime_name: str = "Codex",
+) -> str:
     return "\n".join(
         [
-            "You are a JSON adapter between OpenWorker and Codex.",
+            f"You are a JSON adapter between OpenWorker and {runtime_name}.",
             "Never use shell, web, file, MCP, or any native Codex tools.",
             "Never modify the computer or execute the supplied tools yourself.",
             "Return only JSON matching the provided schema.",

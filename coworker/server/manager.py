@@ -1455,7 +1455,7 @@ class SessionManager:
             from datetime import date
 
             profile["key_set_at"] = date.today().isoformat()
-        if getattr(d, "auth_type", "") == "codex_login":
+        if getattr(d, "auth_type", "").endswith("_login"):
             profile["enabled"] = True
         self.secrets.put(f"provider:{name}", profile)
         self._refresh_provider(name)
@@ -1503,10 +1503,15 @@ class SessionManager:
             api_key = os.environ.get(d.env_key, "").strip()
         base_url = (fields.get("base_url") or profile.get("base_url") or "").strip()
         codex_bin = (fields.get("codex_bin") or profile.get("codex_bin") or "").strip()
+        claude_bin = (fields.get("claude_bin") or profile.get("claude_bin") or "").strip()
         if d.needs_key and not api_key:
             return {"ok": False, "error": "Enter an API key to test."}
         return verify_provider_key(
-            name, api_key=api_key, base_url=base_url, codex_bin=codex_bin
+            name,
+            api_key=api_key,
+            base_url=base_url,
+            codex_bin=codex_bin,
+            claude_bin=claude_bin,
         )
 
     def _model_provider(self, model: str) -> str:
@@ -1524,12 +1529,13 @@ class SessionManager:
         if d is None:
             return False
         profile = profile or self.secrets.get(f"provider:{name}") or {}
-        if getattr(d, "auth_type", "") == "codex_login":
+        if getattr(d, "auth_type", "").endswith("_login"):
             if not profile.get("enabled"):
                 return False
             result = verify_provider_key(
                 name,
                 codex_bin=(profile.get("codex_bin") or "").strip() or None,
+                claude_bin=(profile.get("claude_bin") or "").strip() or None,
                 timeout=3.0,
             )
             return bool(result.get("ok"))

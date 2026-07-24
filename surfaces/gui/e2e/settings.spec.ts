@@ -47,6 +47,7 @@ test("Models: provider gallery states; vendor form previews models", async ({ pa
 
   // Card states from the fixtures: openai configured+used, anthropic configured, zai not.
   await expect(page.getByTestId("set-provider-openai")).toContainText("✓ Connected · used 2h ago");
+  await expect(page.getByTestId("set-provider-claude_subscription")).toContainText("✓ Claude subscription");
   await expect(page.getByTestId("set-provider-codex")).toContainText("✓ ChatGPT subscription");
   await expect(page.getByTestId("set-provider-anthropic")).toContainText("✓ Connected");
   await expect(page.getByTestId("set-provider-zai")).toContainText("Not set up");
@@ -54,6 +55,11 @@ test("Models: provider gallery states; vendor form previews models", async ({ pa
 
   await page.getByTestId("set-provider-codex").click();
   await expect(page.getByText(/No API key or OAuth token is copied/)).toBeVisible();
+  await expect(page.getByTestId("set-remove-key")).toHaveCount(0);
+  await page.getByTestId("set-back").click();
+
+  await page.getByTestId("set-provider-claude_subscription").click();
+  await expect(page.getByText(/official local Claude Code runtime/)).toBeVisible();
   await expect(page.getByTestId("set-remove-key")).toHaveCount(0);
   await page.getByTestId("set-back").click();
 

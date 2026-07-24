@@ -23,6 +23,7 @@ test("provider gallery: cards wear their state; Next arms off stored credentials
   // Every card carries its own status with zero clicks (the 2026-07-16 confusion —
   // "is OpenAI already connected?" — is answered by the gallery itself).
   await expect(page.getByTestId("ob-provider-openai")).toContainText("✓ Connected");
+  await expect(page.getByTestId("ob-provider-claude_subscription")).toContainText("✓ Claude subscription");
   await expect(page.getByTestId("ob-provider-codex")).toContainText("✓ ChatGPT subscription");
   await expect(page.getByTestId("ob-provider-anthropic")).toContainText("✓ Connected");
   await expect(page.getByTestId("ob-provider-zai")).toContainText("Not set up");
@@ -33,6 +34,7 @@ test("provider gallery: cards wear their state; Next arms off stored credentials
     .locator("[data-testid^=ob-provider-]")
     .evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
   expect(names.indexOf("ob-provider-anthropic")).toBeLessThan(names.indexOf("ob-provider-openai"));
+  expect(names.indexOf("ob-provider-claude_subscription")).toBeLessThan(names.indexOf("ob-provider-anthropic"));
   expect(names.indexOf("ob-provider-codex")).toBeLessThan(names.indexOf("ob-provider-openai"));
   expect(names.indexOf("ob-provider-openai")).toBeLessThan(names.indexOf("ob-provider-zai"));
 

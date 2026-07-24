@@ -46,7 +46,7 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
 
   const anyReady =
     ps.providers.some(
-      (p) => p.configured && (p.needs_key || p.auth_type === "codex_login"),
+      (p) => p.configured && (p.needs_key || p.auth_type?.endsWith("_login")),
     ) ||
     ps.keylessOk.size > 0;
   // In the form with typed-but-untested input, Next verifies+saves first (tester
@@ -125,7 +125,7 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
             <h1 className="text-[19px] font-semibold">Welcome to OpenWorker<span className="beta-tag">BETA</span></h1>
             <p className="text-[13px] text-muted mt-0.5 mb-4">
               Pick a model provider to get started. Use your own API key, a local model, or an
-              existing ChatGPT subscription. Credentials stay on this Mac; prompts go to your chosen provider.
+              existing ChatGPT or Claude subscription. Credentials stay on this Mac; prompts go to your chosen provider.
             </p>
 
             {!ps.sel ? (

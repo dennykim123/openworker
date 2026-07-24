@@ -101,6 +101,19 @@ def test_verify_codex_delegates_to_local_login_check(monkeypatch):
     }
 
 
+def test_verify_claude_delegates_to_local_login_check(monkeypatch):
+    monkeypatch.setattr(
+        "coworker.providers.registry.verify_claude_subscription",
+        lambda claude_bin=None, timeout=10.0: {
+            "ok": True,
+            "claude_bin": claude_bin or "/tmp/claude",
+        },
+    )
+    assert verify_provider_key(
+        "claude_subscription", claude_bin="/tmp/claude"
+    ) == {"ok": True, "claude_bin": "/tmp/claude"}
+
+
 def test_verify_network_error_is_clean(monkeypatch):
     _patch_get(monkeypatch, raise_exc=ConnectionError("boom"))
     res = verify_provider_key("openai", api_key="sk-x")

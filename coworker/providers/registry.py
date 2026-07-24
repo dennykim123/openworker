@@ -19,6 +19,10 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
 from .anthropic_provider import AnthropicProvider
+from .claude_subscription_provider import (
+    ClaudeSubscriptionProvider,
+    verify_claude_subscription,
+)
 from .base import ProviderClient
 from .codex_subscription_provider import (
     CodexSubscriptionProvider,
@@ -145,6 +149,14 @@ def _build_codex(profile: dict[str, Any], secrets: Any) -> ProviderClient:
     return CodexSubscriptionProvider(codex_bin=codex_bin)
 
 
+def _build_claude_subscription(
+    profile: dict[str, Any], secrets: Any
+) -> ProviderClient:
+    del secrets
+    claude_bin = ((profile or {}).get("claude_bin") or "").strip() or None
+    return ClaudeSubscriptionProvider(claude_bin=claude_bin)
+
+
 def _openai_compat(vendor: str, default_base_url: str, env_key: Optional[str] = None):
     """Builder factory for vendors reached through their OpenAI-compatible API (Z AI, DeepSeek,
     Kimi, MiniMax, Qwen, xAI, Mistral). The key is resolved from the vendor's OWN profile (or its
@@ -229,6 +241,25 @@ DESCRIPTORS: list[ProviderDescriptor] = [
         build=_build_openai,
         recommended_model="gpt-5.6-sol",
         env_key="OPENAI_API_KEY",
+    ),
+    ProviderDescriptor(
+        name="claude_subscription",
+        title="Claude Subscription (Claude Code)",
+        needs_key=False,
+        fields=[
+            ProviderField(
+                "claude_bin",
+                "Claude Code executable (optional)",
+                secret=False,
+                required=False,
+                placeholder="/opt/homebrew/bin/claude",
+                help="Leave blank to find the official Claude Code CLI on your PATH.",
+            )
+        ],
+        build=_build_claude_subscription,
+        recommended_model="default",
+        auth_type="claude_login",
+        blurb="Uses the local Claude Code runtime and your existing Claude.ai subscription instead of an API key.",
     ),
     ProviderDescriptor(
         name="anthropic",
@@ -423,6 +454,7 @@ def verify_provider_key(
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
     codex_bin: Optional[str] = None,
+    claude_bin: Optional[str] = None,
     timeout: float = 10.0,
 ) -> dict[str, Any]:
     """Validate a provider's credentials with one cheap, read-only call (list models) — the same
@@ -448,6 +480,8 @@ def verify_provider_key(
             )
         elif name == "codex":
             return verify_codex_subscription(codex_bin, timeout=timeout)
+        elif name == "claude_subscription":
+            return verify_claude_subscription(claude_bin, timeout=timeout)
         elif name == "ollama":
             base = _normalize_ollama_url(base_url)
             resp = httpx.get(base.rstrip("/") + "/models", timeout=timeout)

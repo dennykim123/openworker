@@ -103,7 +103,7 @@ export function ModelsTab() {
         ps={ps}
         tp="set"
         footer={
-          ps.credentialed && ps.sel !== "codex" ? (
+          ps.credentialed && !ps.info?.auth_type?.endsWith("_login") ? (
             <button
               className="text-[12.5px] text-danger/80 hover:text-danger hover:underline underline-offset-2"
               data-testid="set-remove-key"

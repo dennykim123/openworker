@@ -21,6 +21,7 @@ import xai from "./logos/xai.svg";
 
 export const PROVIDER_LOGOS: Record<string, string> = {
   anthropic,
+  claude_subscription: anthropic,
   openai,
   codex: openai,
   gemini,
@@ -37,6 +38,7 @@ export const PROVIDER_LOGOS: Record<string, string> = {
 };
 
 export const PROVIDER_ORDER = [
+  "claude_subscription",
   "anthropic",
   "codex",
   "openai",
