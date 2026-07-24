@@ -18,6 +18,11 @@ from .codex_subscription_provider import (
     verify_codex_subscription,
 )
 from .gemini_provider import GeminiProvider
+from .gemini_subscription_provider import (
+    GeminiSubscriptionProvider,
+    resolve_gemini_bin,
+    verify_gemini_subscription,
+)
 from .openai_provider import OpenAIProvider, resolve_api_key
 from .registry import (
     ProviderDescriptor,
@@ -41,12 +46,15 @@ __all__ = [
     "ClaudeSubscriptionProvider",
     "CodexSubscriptionProvider",
     "GeminiProvider",
+    "GeminiSubscriptionProvider",
     "OpenAIProvider",
     "resolve_api_key",
     "resolve_claude_bin",
     "resolve_codex_bin",
+    "resolve_gemini_bin",
     "verify_codex_subscription",
     "verify_claude_subscription",
+    "verify_gemini_subscription",
     "capabilities_for",
     "ProviderRouter",
     "ProviderDescriptor",

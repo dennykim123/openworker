@@ -37,11 +37,13 @@ export const KEY_HELP: Record<string, { url: string; label: string }> = {
 export type Verify = { state: "idle" | "testing" | "ok" | "error"; msg?: string };
 
 function isSubscriptionProvider(info?: ProviderInfo | null): boolean {
-  return !!info && (info.auth_type?.endsWith("_login") || ["codex", "claude_subscription"].includes(info.name));
+  return !!info && (info.auth_type?.endsWith("_login") || ["codex", "claude_subscription", "gemini_subscription"].includes(info.name));
 }
 
 function subscriptionLabel(info?: ProviderInfo | null): string {
-  return info?.name === "claude_subscription" ? "Claude subscription" : "ChatGPT subscription";
+  if (info?.name === "claude_subscription") return "Claude subscription";
+  if (info?.name === "gemini_subscription") return "Gemini subscription";
+  return "ChatGPT subscription";
 }
 
 function isLocalProvider(info?: ProviderInfo | null): boolean {
@@ -412,8 +414,16 @@ function SubscriptionConnectPanel({ ps, tp }: { ps: ProviderSetupState; tp: stri
   const connected = info.configured || result?.state === "connected";
   const waiting = result?.state === "authorizing";
   const missing = result?.state === "missing_runtime";
-  const providerName = info.name === "claude_subscription" ? "Claude" : "ChatGPT";
-  const runtimeName = info.name === "claude_subscription" ? "Claude Code" : "Codex";
+  const providerName = info.name === "claude_subscription"
+    ? "Claude"
+    : info.name === "gemini_subscription"
+      ? "Gemini"
+      : "ChatGPT";
+  const runtimeName = info.name === "claude_subscription"
+    ? "Claude Code"
+    : info.name === "gemini_subscription"
+      ? "Gemini CLI"
+      : "Codex";
   const runtimeField = info.fields[0];
 
   return (
@@ -497,6 +507,18 @@ function SubscriptionConnectPanel({ ps, tp }: { ps: ProviderSetupState; tp: stri
             onClick={() => openExternal("https://code.claude.com/docs/en/legal-and-compliance#authentication-and-credential-use")}
           >
             Review Anthropic's policy ↗
+          </button>
+        </p>
+      )}
+
+      {info.name === "gemini_subscription" && (
+        <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
+          Community experiment: Google says third-party agents must use AI Studio or Vertex AI keys instead of piggybacking on Gemini CLI OAuth.{" "}
+          <button
+            className="font-medium underline underline-offset-2 hover:text-ink"
+            onClick={() => openExternal("https://geminicli.com/docs/resources/faq/#why-cant-i-use-third-party-software-like-claude-code-openclaw-or-opencode-with-gemini-cli")}
+          >
+            Review Google's policy ↗
           </button>
         </p>
       )}

@@ -155,7 +155,7 @@ class SessionManager:
         self._mcp_authorizing: set[str] = set()
         self._mcp_errors: dict[str, str] = {}
         # Official subscription-runtime logins started from Settings. The app never receives
-        # OAuth credentials: Codex / Claude Code owns the browser flow and its credential store;
+        # OAuth credentials: Codex / Claude Code / Gemini CLI owns the browser flow and its credential store;
         # we only keep the short-lived child handle so repeated clicks cannot spawn duplicates.
         self._provider_logins: dict[str, subprocess.Popen] = {}
         self._provider_login_bins: dict[str, str] = {}
@@ -1510,6 +1510,7 @@ class SessionManager:
         base_url = (fields.get("base_url") or profile.get("base_url") or "").strip()
         codex_bin = (fields.get("codex_bin") or profile.get("codex_bin") or "").strip()
         claude_bin = (fields.get("claude_bin") or profile.get("claude_bin") or "").strip()
+        gemini_bin = (fields.get("gemini_bin") or profile.get("gemini_bin") or "").strip()
         if d.needs_key and not api_key:
             return {"ok": False, "error": "Enter an API key to test."}
         return verify_provider_key(
@@ -1518,11 +1519,13 @@ class SessionManager:
             base_url=base_url,
             codex_bin=codex_bin,
             claude_bin=claude_bin,
+            gemini_bin=gemini_bin,
         )
 
     _SUBSCRIPTION_INSTALL_URLS = {
         "codex": "https://chatgpt.com/download",
         "claude_subscription": "https://code.claude.com/docs/en/setup",
+        "gemini_subscription": "https://github.com/google-gemini/gemini-cli#installation",
     }
 
     def _subscription_login_details(
@@ -1560,6 +1563,30 @@ class SessionManager:
                 [resolved, "auth", "login", "--claudeai"] if resolved else [],
                 _subscription_env(),
             )
+        if name == "gemini_subscription":
+            from ..providers.gemini_subscription_provider import (
+                resolve_gemini_bin,
+                subscription_env,
+                write_google_auth_settings,
+            )
+
+            configured = (
+                fields.get("gemini_bin")
+                or self._provider_login_bins.get(name)
+                or profile.get("gemini_bin")
+                or ""
+            )
+            resolved = resolve_gemini_bin(str(configured))
+            policy = write_google_auth_settings(
+                self._data_base / "gemini-subscription-settings.json"
+            )
+            return (
+                resolved,
+                [resolved, "--list-sessions", "--output-format", "json"]
+                if resolved
+                else [],
+                subscription_env(policy),
+            )
         return None, [], None
 
     def subscription_connect_status(self, name: str) -> dict[str, Any]:
@@ -1581,13 +1608,18 @@ class SessionManager:
                 "install_url": self._SUBSCRIPTION_INSTALL_URLS.get(name),
             }
 
-        verify_fields = {
-            "codex_bin" if name == "codex" else "claude_bin": resolved
+        runtime_fields = {
+            "codex": "codex_bin",
+            "claude_subscription": "claude_bin",
+            "gemini_subscription": "gemini_bin",
         }
+        verify_fields = {runtime_fields[name]: resolved}
         checked = self.verify_provider(name, verify_fields)
         if checked.get("ok"):
             saved = self.set_provider(name, verify_fields)
-            self._provider_logins.pop(name, None)
+            login_proc = self._provider_logins.pop(name, None)
+            if login_proc is not None and login_proc.poll() is None:
+                login_proc.terminate()
             self._provider_login_bins.pop(name, None)
             return {
                 "ok": True,
@@ -1640,7 +1672,7 @@ class SessionManager:
             }
 
         kwargs: dict[str, Any] = {
-            "stdin": subprocess.DEVNULL,
+            "stdin": subprocess.PIPE if name == "gemini_subscription" else subprocess.DEVNULL,
             "stdout": subprocess.DEVNULL,
             "stderr": subprocess.DEVNULL,
             "env": env,
@@ -1653,6 +1685,9 @@ class SessionManager:
             kwargs["start_new_session"] = True
         try:
             proc = subprocess.Popen(cmd, **kwargs)
+            if name == "gemini_subscription" and proc.stdin is not None:
+                proc.stdin.write(b"y\n")
+                proc.stdin.close()
         except OSError as exc:
             return {
                 "ok": False,
@@ -1690,6 +1725,7 @@ class SessionManager:
                 name,
                 codex_bin=(profile.get("codex_bin") or "").strip() or None,
                 claude_bin=(profile.get("claude_bin") or "").strip() or None,
+                gemini_bin=(profile.get("gemini_bin") or "").strip() or None,
                 timeout=3.0,
             )
             return bool(result.get("ok"))

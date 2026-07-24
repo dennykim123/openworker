@@ -43,7 +43,7 @@ def test_readme_leads_with_unofficial_fork_disclosure() -> None:
 
     assert readme.startswith("# OpenWorker Subscription Bridge\n")
     assert "Unofficial community fork of OpenWorker" in readme
-    assert "not affiliated with OpenWorker, OpenAI, or Anthropic" in readme
+    assert "not affiliated with OpenWorker, OpenAI, Anthropic, or Google" in readme
 
 
 def test_release_artifacts_use_the_bridge_name() -> None:

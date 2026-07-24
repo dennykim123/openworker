@@ -46,6 +46,7 @@ MATRIX: dict[str, ModelEntry] = {
     # -- first-party ------------------------------------------------------------
     "claude_subscription:default": ModelEntry("Claude Subscription · Claude Code", _CODEX),
     "codex:default": ModelEntry("ChatGPT Subscription · Codex", _CODEX),
+    "gemini_subscription:default": ModelEntry("Gemini Subscription · Gemini CLI", _CODEX),
     # GPT-5.6 (2026-07-09): number = generation, Sol/Terra/Luna = capability tiers.
     # Bare "gpt-5.6" aliases to Sol server-side; we list the explicit tier ids only.
     # Rolling out — accounts without access get a friendly error (providers/errors.py).

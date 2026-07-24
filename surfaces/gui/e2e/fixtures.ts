@@ -325,6 +325,8 @@ const PRIMARY_ROOT = { path: "/Users/test/OpenWorker Subscription Bridge/launch-
 const baseName = (p: string) => p.split("/").filter(Boolean).pop() || p;
 
 export const PROVIDERS = [
+  // gemini_subscription: external Google AI Pro/Ultra login through Gemini CLI.
+  { name: "gemini_subscription", title: "Gemini Subscription (Gemini CLI)", needs_key: false, auth_type: "gemini_login", blurb: "Uses your Google AI subscription through Gemini CLI.", fields: [{ key: "gemini_bin", label: "Gemini CLI executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/opt/homebrew/bin/gemini" }], configured: true, values: {}, suggested_models: ["default"], key_set_at: null, last_used_at: null },
   // claude_subscription: external Claude.ai subscription login through Claude Code.
   { name: "claude_subscription", title: "Claude Subscription (Claude Code)", needs_key: false, auth_type: "claude_login", blurb: "Uses your existing Claude.ai subscription through Claude Code.", fields: [{ key: "claude_bin", label: "Claude Code executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/opt/homebrew/bin/claude" }], configured: true, values: {}, suggested_models: ["default"], key_set_at: null, last_used_at: null },
   // codex: external ChatGPT subscription login, detected through the official local runtime.
@@ -1237,13 +1239,13 @@ export async function mockApi(page: import("@playwright/test").Page) {
     }
     // Subscription login is owned by the official local runtime. The mock completes it
     // immediately; focused specs can override this route to exercise the waiting state.
-    if (/\/v1\/providers\/(codex|claude_subscription)\/connect$/.test(p) && m === "POST") {
+    if (/\/v1\/providers\/(codex|claude_subscription|gemini_subscription)\/connect$/.test(p) && m === "POST") {
       const name = p.split("/").slice(-2)[0];
       const prov = providers.find((x) => x.name === name);
       if (prov) prov.configured = true;
       return json({ ok: true, state: "connected", provider: name, recommended_model: "default" });
     }
-    if (/\/v1\/providers\/(codex|claude_subscription)\/connect$/.test(p) && m === "GET") {
+    if (/\/v1\/providers\/(codex|claude_subscription|gemini_subscription)\/connect$/.test(p) && m === "GET") {
       const name = p.split("/").slice(-2)[0];
       const prov = providers.find((x) => x.name === name);
       return json({ ok: !!prov?.configured, state: prov?.configured ? "connected" : "disconnected", provider: name });

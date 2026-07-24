@@ -109,6 +109,7 @@ def test_capabilities_known_models():
     assert capabilities_for("openai:gpt-5.5").vision is True  # provider prefix stripped
     assert capabilities_for("codex:gpt-5.6-sol").streaming is False
     assert capabilities_for("claude_subscription:default").streaming is False
+    assert capabilities_for("gemini_subscription:default").streaming is False
     assert capabilities_for("o3-mini").parallel_tool_calls is False
     assert capabilities_for("deepseek-chat").tools is True
 
@@ -394,6 +395,7 @@ def test_matrix_labels_and_custom_model_fallback():
     labels = model_labels()
     assert labels["codex:default"] == "ChatGPT Subscription · Codex"
     assert labels["claude_subscription:default"] == "Claude Subscription · Claude Code"
+    assert labels["gemini_subscription:default"] == "Gemini Subscription · Gemini CLI"
     assert labels["together:zai-org/GLM-5.2"] == "GLM-5.2 · via Together"
     assert labels["zai:glm-5.2"] == "GLM-5.2 · Z AI"
     # Deliberately small: agent-capable current models only (owner call, 2026-07-04).
@@ -403,6 +405,72 @@ def test_matrix_labels_and_custom_model_fallback():
     # but at the user's own risk (no parallel tool calls assumed).
     caps = capabilities_for("together:some-org/Brand-New-Model")
     assert caps.tools and not caps.parallel_tool_calls
+
+
+def test_gemini_subscription_verification_checks_cache_metadata_without_reading_it(
+    monkeypatch, tmp_path
+):
+    from coworker.providers import gemini_subscription_provider as mod
+
+    gemini = tmp_path / "gemini"
+    gemini.write_text("", encoding="utf-8")
+    oauth = tmp_path / "oauth_creds.json"
+    oauth.write_text("not parsed by the bridge", encoding="utf-8")
+    monkeypatch.setattr(mod, "_oauth_credentials_path", lambda: oauth)
+    result = mod.verify_gemini_subscription(str(gemini))
+
+    assert result["ok"] is True
+    assert result["auth_method"] == "google"
+
+
+def test_gemini_subscription_provider_parses_structured_turn(monkeypatch, tmp_path):
+    from coworker.providers import gemini_subscription_provider as mod
+
+    gemini = tmp_path / "gemini"
+    gemini.write_text("", encoding="utf-8")
+    monkeypatch.setattr(
+        mod,
+        "verify_gemini_subscription",
+        lambda *_args, **_kwargs: {"ok": True, "gemini_bin": str(gemini)},
+    )
+    response = {
+        "response": json.dumps(
+            {
+                "text": "hello",
+                "tool_calls": [
+                    {
+                        "name": "read_file",
+                        "arguments_json": json.dumps({"path": "a.py"}),
+                    }
+                ],
+            }
+        )
+    }
+    seen = {}
+
+    def fake_run(cmd, **kwargs):
+        seen["cmd"] = cmd
+        seen["cwd"] = kwargs["cwd"]
+        seen["env"] = kwargs["env"]
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(response),
+            stderr="",
+        )
+
+    monkeypatch.setattr(mod.subprocess, "run", fake_run)
+    provider = mod.GeminiSubscriptionProvider(gemini_bin=str(gemini))
+    turn = provider.complete(
+        model="default",
+        messages=[{"role": "user", "content": "hi"}],
+        tools=[{"type": "function", "function": {"name": "read_file"}}],
+    )
+
+    assert turn.text == "hello"
+    assert turn.tool_calls[0].name == "read_file"
+    assert turn.tool_calls[0].arguments == {"path": "a.py"}
+    assert "--approval-mode" in seen["cmd"] and "plan" in seen["cmd"]
+    assert seen["env"]["NO_BROWSER"] == "true"
 
 
 def test_reseller_descriptors_and_matrix_stay_in_lockstep():

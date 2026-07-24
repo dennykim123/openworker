@@ -29,7 +29,7 @@ def capabilities_for(model: str) -> ModelCapabilities:
             tools=True, vision=False, parallel_tool_calls=False, streaming=True
         )
 
-    if provider in {"codex", "claude_subscription"}:
+    if provider in {"codex", "claude_subscription", "gemini_subscription"}:
         return ModelCapabilities(
             tools=True, vision=False, pdf=False, parallel_tool_calls=False, streaming=False
         )

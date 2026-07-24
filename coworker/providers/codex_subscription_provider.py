@@ -222,7 +222,7 @@ def _build_prompt(
     return "\n".join(
         [
             f"You are a JSON adapter between OpenWorker Subscription Bridge and {runtime_name}.",
-            "Never use shell, web, file, MCP, or any native Codex tools.",
+            f"Never use shell, web, file, MCP, or any native {runtime_name} tools.",
             "Never modify the computer or execute the supplied tools yourself.",
             "Return only JSON matching the provided schema.",
             "When a tool is needed, emit it in tool_calls with the exact tool name and JSON-stringified arguments.",

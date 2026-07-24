@@ -1,20 +1,20 @@
 # OpenWorker Subscription Bridge
 
-**[Upstream OpenWorker](https://openworker.com)** · [Subscription bridge](#chatgpt-and-claude-subscription-bridge) · [Issues](https://github.com/dennykim123/openworker-subscription-bridge/issues)
+**[Upstream OpenWorker](https://openworker.com)** · [Subscription bridge](#chatgpt-claude-and-gemini-subscription-bridge) · [Issues](https://github.com/dennykim123/openworker-subscription-bridge/issues)
 
-> **Unofficial community fork of OpenWorker.** This project is not affiliated with OpenWorker, OpenAI, or Anthropic. Its ChatGPT and Claude subscription providers are not part of the upstream OpenWorker release or update channel.
+> **Unofficial community fork of OpenWorker.** This project is not affiliated with OpenWorker, OpenAI, Anthropic, or Google. Its ChatGPT, Claude, and Gemini subscription providers are not part of the upstream OpenWorker release or update channel.
 
 OpenWorker Subscription Bridge is a community edition of the open-source OpenWorker desktop agent. It keeps the upstream workflow while adding clearly separated subscription-backed model options.
 
 It runs on your machine and doesn't lock you into any model: bring your own API key for OpenAI, Anthropic, Google, or an open-weight provider, or run fully local with Ollama. Your data leaves your machine only through the model and integrations *you* choose.
 
-## ChatGPT and Claude subscription fork
+## ChatGPT, Claude, and Gemini subscription bridge
 
-This community fork adds **ChatGPT subscription access through Codex** and **Claude subscription access through Claude Code**. It is not an official OpenWorker, OpenAI, or Anthropic release.
+This community fork adds **ChatGPT subscription access through Codex**, **Claude subscription access through Claude Code**, and **Google AI Pro/Ultra access through Gemini CLI**. It is not an official OpenWorker, OpenAI, Anthropic, or Google release.
 
-- No OpenAI or Anthropic API key is required for these two providers.
-- Subscription Bridge does not read token files or copy OAuth tokens. It delegates model turns to the locally installed `codex` or `claude` executable.
-- Codex runs in ephemeral, read-only mode. Claude Code runs with built-in tools, MCP, project settings, and session persistence disabled.
+- No OpenAI, Anthropic, or Google API key is required for these three providers.
+- Subscription Bridge does not read token files or copy OAuth tokens. It delegates model turns to the locally installed `codex`, `claude`, or `gemini` executable.
+- Codex runs in ephemeral, read-only mode. Claude Code runs with built-in tools, MCP, project settings, and session persistence disabled. Gemini CLI runs in an empty temporary workspace with plan-mode approvals.
 - Model requests still leave your Mac for the selected provider, and normal subscription limits and terms apply.
 - The OpenWorker agent remains responsible for its own tools and approval prompts; the subscription subprocesses do not operate tools themselves.
 
@@ -24,9 +24,13 @@ For ChatGPT, use a plan with Codex access and make sure `codex login status` rep
 
 For Claude, install Claude Code and sign in with a Claude.ai Pro, Max, Team, or Enterprise account. `claude auth status` must report `authMethod: claude.ai` and `apiProvider: firstParty`.
 
-After launching this fork, open **Models** and choose **ChatGPT Subscription (Codex)** or **Claude Subscription (Claude Code)**. One click starts the official runtime's browser sign-in, then the card updates automatically when the login succeeds. No terminal command or token copy is required. If the runtime is missing, the same screen links to its official installer.
+For Gemini, install the official Gemini CLI and sign in with the Google account attached to Google AI Pro or Ultra. The bridge removes API-key and Vertex AI environment overrides from this runtime so this provider cannot silently bill an API key.
+
+After launching this fork, open **Models** and choose a subscription card. One click starts the official runtime's browser sign-in, then the card updates automatically when the login succeeds. No terminal command or token copy is required. If the runtime is missing, the same screen links to its official installer.
 
 > **Claude distribution note:** Anthropic's current [authentication and credential-use policy](https://code.claude.com/docs/en/legal-and-compliance#authentication-and-credential-use) directs third-party products to API-key authentication and says third-party developers may not offer Claude.ai login or route Free, Pro, or Max credentials for users. The Claude subscription path in this community fork is therefore an experimental local integration, not an Anthropic-endorsed distribution path. Use an Anthropic API key for a public, organizational, or policy-cleared deployment.
+
+> **Gemini distribution note:** Google's current [Gemini CLI FAQ](https://geminicli.com/docs/resources/faq/#why-cant-i-use-third-party-software-like-claude-code-openclaw-or-opencode-with-gemini-cli) says third-party software must not piggyback on Gemini CLI OAuth and directs third-party coding agents to Google AI Studio or Vertex AI API keys. The Gemini subscription path is therefore an experimental local integration, not a Google-endorsed distribution path. Use the existing Gemini API-key provider for a public, organizational, or policy-cleared deployment.
 
 [![How OpenWorker works](docs/assets/how-it-works.png)](https://openworker.com)
 
@@ -66,7 +70,7 @@ Under the hood:
 
 Model access is yours: pick a provider and switch anytime. This fork supports:
 
-**ChatGPT subscription through Codex · Claude subscription through Claude Code · OpenAI API · Anthropic API · Google Gemini · Inkling (Thinking Machines) · GLM (Z.ai) · DeepSeek · Kimi (Moonshot) · Qwen · MiniMax · Mistral · Grok (xAI)** - plus open-weight models via **Together** and **Fireworks**, and fully local models via **Ollama**.
+**ChatGPT subscription through Codex · Claude subscription through Claude Code · Gemini subscription through Gemini CLI · OpenAI API · Anthropic API · Google Gemini API · Inkling (Thinking Machines) · GLM (Z.ai) · DeepSeek · Kimi (Moonshot) · Qwen · MiniMax · Mistral · Grok (xAI)** - plus open-weight models via **Together** and **Fireworks**, and fully local models via **Ollama**.
 
 A curated model list marks what we've verified for tool-calling work. Adding any model string works at your own risk.
 

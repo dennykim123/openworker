@@ -11,6 +11,7 @@ async function openModels(page) {
 for (const provider of [
   { name: "codex", ready: "ChatGPT subscription is ready" },
   { name: "claude_subscription", ready: "Claude subscription is ready" },
+  { name: "gemini_subscription", ready: "Gemini subscription is ready" },
 ]) {
   test(`${provider.name} starts official subscription sign-in from one gallery click`, async ({ page }) => {
     const providers = PROVIDERS.map((item) => ({
@@ -96,4 +97,12 @@ test("missing Claude Code gets one clear official install action", async ({ page
   await openModels(page);
   await page.getByTestId("set-provider-claude_subscription").click();
   await expect(page.getByTestId("set-subscription-install")).toHaveText(/Install official Claude Code/);
+});
+
+test("Gemini subscription shows the Google policy disclosure", async ({ page }) => {
+  await openModels(page);
+  await page.getByTestId("set-provider-gemini_subscription").click();
+  await expect(page.getByTestId("set-subscription-connect")).toContainText(
+    "Google says third-party agents must use AI Studio or Vertex AI keys",
+  );
 });

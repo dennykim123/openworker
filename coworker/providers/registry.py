@@ -29,6 +29,10 @@ from .codex_subscription_provider import (
     verify_codex_subscription,
 )
 from .gemini_provider import GeminiProvider
+from .gemini_subscription_provider import (
+    GeminiSubscriptionProvider,
+    verify_gemini_subscription,
+)
 from .openai_provider import OpenAIProvider
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
@@ -134,6 +138,14 @@ def _build_gemini(profile: dict[str, Any], secrets: Any) -> ProviderClient:
     # Same deferred-key contract as anthropic (GeminiProvider/resolve_api_key).
     api_key = ((profile or {}).get("api_key") or "").strip() or None
     return GeminiProvider(api_key=api_key, secrets=secrets)
+
+
+def _build_gemini_subscription(
+    profile: dict[str, Any], secrets: Any
+) -> ProviderClient:
+    del secrets
+    gemini_bin = ((profile or {}).get("gemini_bin") or "").strip() or None
+    return GeminiSubscriptionProvider(gemini_bin=gemini_bin)
 
 
 def _build_ollama(profile: dict[str, Any], secrets: Any) -> ProviderClient:
@@ -296,6 +308,25 @@ DESCRIPTORS: list[ProviderDescriptor] = [
         env_key="GEMINI_API_KEY",
     ),
     ProviderDescriptor(
+        name="gemini_subscription",
+        title="Gemini Subscription (Gemini CLI)",
+        needs_key=False,
+        fields=[
+            ProviderField(
+                "gemini_bin",
+                "Gemini CLI executable (optional)",
+                secret=False,
+                required=False,
+                placeholder="/opt/homebrew/bin/gemini",
+                help="Leave blank to find the official Gemini CLI on your PATH.",
+            )
+        ],
+        build=_build_gemini_subscription,
+        recommended_model="default",
+        auth_type="gemini_login",
+        blurb="Uses the local Gemini CLI runtime and your Google AI Pro or Ultra login instead of an API key.",
+    ),
+    ProviderDescriptor(
         name="codex",
         title="ChatGPT Subscription (Codex)",
         needs_key=False,
@@ -455,6 +486,7 @@ def verify_provider_key(
     base_url: Optional[str] = None,
     codex_bin: Optional[str] = None,
     claude_bin: Optional[str] = None,
+    gemini_bin: Optional[str] = None,
     timeout: float = 10.0,
 ) -> dict[str, Any]:
     """Validate a provider's credentials with one cheap, read-only call (list models) — the same
@@ -482,6 +514,8 @@ def verify_provider_key(
             return verify_codex_subscription(codex_bin, timeout=timeout)
         elif name == "claude_subscription":
             return verify_claude_subscription(claude_bin, timeout=timeout)
+        elif name == "gemini_subscription":
+            return verify_gemini_subscription(gemini_bin, timeout=timeout)
         elif name == "ollama":
             base = _normalize_ollama_url(base_url)
             resp = httpx.get(base.rstrip("/") + "/models", timeout=timeout)

@@ -342,6 +342,22 @@ def test_manager_claude_provider_tracks_live_subscription(tmp_path, monkeypatch)
     assert "default" in provs["claude_subscription"]["suggested_models"]
 
 
+def test_manager_gemini_provider_tracks_live_subscription(tmp_path, monkeypatch):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setattr(
+        "coworker.server.manager.verify_provider_key",
+        lambda name, **kwargs: {"ok": name == "gemini_subscription"},
+    )
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+    mgr.set_provider("gemini_subscription", {})
+    provs = {p["name"]: p for p in mgr.get_providers()}
+    assert provs["gemini_subscription"]["configured"] is True
+    assert provs["gemini_subscription"]["auth_type"] == "gemini_login"
+    assert "default" in provs["gemini_subscription"]["suggested_models"]
+
+
 def test_subscription_connect_finishes_immediately_when_cli_is_already_logged_in(
     tmp_path, monkeypatch
 ):
@@ -399,6 +415,47 @@ def test_subscription_connect_starts_one_official_browser_login(tmp_path, monkey
     assert first["state"] == second["state"] == "authorizing"
     assert seen["cmd"] == ["/tmp/codex", "login"]
     assert seen["kwargs"]["stdin"] is not None
+
+
+def test_gemini_connect_confirms_official_browser_login_once(tmp_path, monkeypatch):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setattr(
+        "coworker.server.manager.verify_provider_key",
+        lambda name, **kwargs: {"ok": False, "error": "not signed in"},
+    )
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+    monkeypatch.setattr(
+        mgr,
+        "_subscription_login_details",
+        lambda name, fields=None: (
+            "/tmp/gemini",
+            ["/tmp/gemini", "--list-sessions", "--output-format", "json"],
+            {"GOOGLE_GENAI_USE_GCA": "true"},
+        ),
+    )
+    written = []
+
+    class FakeStdin:
+        def write(self, value):
+            written.append(value)
+
+        def close(self):
+            written.append("closed")
+
+    class FakeProcess:
+        stdin = FakeStdin()
+
+        def poll(self):
+            return None
+
+    monkeypatch.setattr("subprocess.Popen", lambda cmd, **kwargs: FakeProcess())
+    first = mgr.connect_subscription_provider("gemini_subscription")
+    second = mgr.connect_subscription_provider("gemini_subscription")
+
+    assert first["state"] == second["state"] == "authorizing"
+    assert written == [b"y\n", "closed"]
 
 
 def test_subscription_connect_reports_official_install_link_when_runtime_is_missing(
