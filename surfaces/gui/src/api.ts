@@ -1260,6 +1260,43 @@ export async function verifyProvider(
   return res.json();
 }
 
+export type SubscriptionConnectState =
+  | "connected"
+  | "authorizing"
+  | "disconnected"
+  | "missing_runtime"
+  | "unsupported"
+  | "error";
+
+export interface SubscriptionConnectResult {
+  ok: boolean;
+  state: SubscriptionConnectState;
+  provider?: string;
+  error?: string;
+  message?: string;
+  install_url?: string;
+  recommended_model?: string | null;
+}
+
+/** Start the official local runtime's browser login; OAuth credentials remain owned by it. */
+export async function connectSubscriptionProvider(
+  name: string,
+  fields: Record<string, string>,
+): Promise<SubscriptionConnectResult> {
+  const res = await fetch(`${httpBase()}/v1/providers/${encodeURIComponent(name)}/connect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fields }),
+  });
+  return res.json();
+}
+
+/** Poll the official runtime after its browser login starts. */
+export async function getSubscriptionConnectStatus(name: string): Promise<SubscriptionConnectResult> {
+  const res = await fetch(`${httpBase()}/v1/providers/${encodeURIComponent(name)}/connect`);
+  return res.json();
+}
+
 /** Client-side provider guess from an API key's shape (mirrors the server's detect_provider). */
 export function detectProvider(apiKey: string): string | null {
   const key = (apiKey || "").trim();

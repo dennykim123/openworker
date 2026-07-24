@@ -54,7 +54,7 @@ test("Models: provider gallery states; vendor form previews models", async ({ pa
   await expect(page.getByTestId("set-provider-ollama")).toContainText("No key needed");
 
   await page.getByTestId("set-provider-codex").click();
-  await expect(page.getByText(/No API key or OAuth token is copied/)).toBeVisible();
+  await expect(page.getByText(/never reads or copies the OAuth token/)).toBeVisible();
   await expect(page.getByTestId("set-remove-key")).toHaveCount(0);
   await page.getByTestId("set-back").click();
 

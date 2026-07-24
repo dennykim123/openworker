@@ -1212,6 +1212,18 @@ def create_app(manager: SessionManager) -> FastAPI:
             manager.verify_provider, name, (body or {}).get("fields")
         )
 
+    @app.post("/v1/providers/{name}/connect")
+    async def provider_subscription_connect(name: str, body: Optional[dict] = None) -> dict[str, Any]:
+        # Starts only the provider's official local CLI login. The CLI owns the browser flow and
+        # credential store; Subscription Bridge never sees or copies the resulting OAuth token.
+        return await asyncio.to_thread(
+            manager.connect_subscription_provider, name, (body or {}).get("fields")
+        )
+
+    @app.get("/v1/providers/{name}/connect")
+    async def provider_subscription_connect_status(name: str) -> dict[str, Any]:
+        return await asyncio.to_thread(manager.subscription_connect_status, name)
+
     # -- settings (model API key) -----------------------------------------------
     @app.get("/v1/settings")
     def settings_get() -> dict[str, Any]:

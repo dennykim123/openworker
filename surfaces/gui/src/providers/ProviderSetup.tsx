@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  connectSubscriptionProvider,
   getProviders,
+  getSubscriptionConnectStatus,
   removeProvider,
   setProvider,
   verifyProvider,
   type ProviderInfo,
+  type SubscriptionConnectResult,
 } from "../api";
 import { openExternal } from "../tauri";
 import { PROVIDER_LOGOS, providerRank } from "./logos";
@@ -101,6 +104,8 @@ export interface ProviderSetupState {
   // owner-hit 2026-07-23: the budget silently never saved).
   saveField: (key: string) => Promise<void>;
   fieldSaved: string | null; // field key flashing "✓ Saved"
+  subscriptionConnect: SubscriptionConnectResult | null;
+  connectSubscription: (name?: string) => Promise<void>;
 }
 
 export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetupState {
@@ -120,6 +125,11 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   // Which non-secret field just blur-saved (flashes "✓ Saved" in the input).
   const [fieldSaved, setFieldSaved] = useState<string | null>(null);
   const fieldSavedTimer = useRef<number | null>(null);
+  const [subscriptionConnect, setSubscriptionConnect] = useState<SubscriptionConnectResult | null>(null);
+  const connectPollTimer = useRef<number | null>(null);
+  // Invalidates any in-flight login request when the user changes cards or leaves this view.
+  // Clearing the timer alone is not enough because a status request may already be awaiting a response.
+  const connectAttempt = useRef(0);
 
   const refreshProviders = () =>
     getProviders()
@@ -128,7 +138,10 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   useEffect(() => {
     refreshProviders();
     return () => {
+      connectAttempt.current += 1;
       if (backTimer.current) window.clearTimeout(backTimer.current);
+      if (fieldSavedTimer.current) window.clearTimeout(fieldSavedTimer.current);
+      if (connectPollTimer.current) window.clearTimeout(connectPollTimer.current);
     };
   }, []);
 
@@ -138,6 +151,8 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   const credentialed = !!info?.configured && (!!info?.needs_key || isSubscriptionProvider(info));
 
   const openProvider = (name: string) => {
+    connectAttempt.current += 1;
+    if (connectPollTimer.current) window.clearTimeout(connectPollTimer.current);
     const p = providers.find((x) => x.name === name);
     if (sel) setDrafts((d) => ({ ...d, [sel]: fields }));
     const draft = drafts[name];
@@ -147,6 +162,7 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
     setFields(next);
     setDirty(!!draft && Object.values(draft).some(Boolean));
     setVerify({ state: "idle" });
+    setSubscriptionConnect(null);
     setShowEndpoint(false);
   };
 
@@ -156,8 +172,62 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
     // plaintext key into the field instead of the masked placeholder + saved pill
     // (state-restore bug, owner catch 2026-07-19). A clean form clears any stale draft.
     if (sel) setDrafts((d) => ({ ...d, [sel]: dirty ? fields : {} }));
+    connectAttempt.current += 1;
+    if (connectPollTimer.current) window.clearTimeout(connectPollTimer.current);
     setSel(null);
     setVerify({ state: "idle" });
+    setSubscriptionConnect(null);
+  };
+
+  const finishSubscriptionConnect = async (result: SubscriptionConnectResult, attempt: number) => {
+    if (connectAttempt.current !== attempt) return;
+    setSubscriptionConnect(result);
+    if (result.state !== "connected") return;
+    setVerify({ state: "ok" });
+    setDirty(false);
+    await refreshProviders();
+    if (connectAttempt.current !== attempt) return;
+    opts?.onSaved?.();
+  };
+
+  const pollSubscriptionConnect = (name: string, attempt: number) => {
+    if (connectPollTimer.current) window.clearTimeout(connectPollTimer.current);
+    connectPollTimer.current = window.setTimeout(async () => {
+      const result = await getSubscriptionConnectStatus(name).catch(() => ({
+        ok: false,
+        state: "error" as const,
+        error: "Couldn't check the sign-in status. Try again.",
+      }));
+      if (connectAttempt.current !== attempt) return;
+      await finishSubscriptionConnect(result, attempt);
+      if (result.state === "authorizing" && connectAttempt.current === attempt)
+        pollSubscriptionConnect(name, attempt);
+    }, 1000);
+  };
+
+  const connectSubscription = async (name?: string) => {
+    const target = name || sel;
+    if (!target) return;
+    const provider = providers.find((p) => p.name === target);
+    if (!isSubscriptionProvider(provider)) return;
+
+    let connectFields = fields;
+    if (target !== sel) {
+      const next: Record<string, string> = {};
+      for (const f of provider?.fields || []) next[f.key] = provider?.values?.[f.key] || f.default || "";
+      connectFields = next;
+      openProvider(target);
+    }
+    const attempt = ++connectAttempt.current;
+    setSubscriptionConnect({ ok: true, state: "authorizing", message: "Checking the official runtime…" });
+    const result = await connectSubscriptionProvider(target, connectFields).catch(() => ({
+      ok: false,
+      state: "error" as const,
+      error: "Couldn't start sign-in. Try again.",
+    }));
+    await finishSubscriptionConnect(result, attempt);
+    if (result.state === "authorizing" && connectAttempt.current === attempt)
+      pollSubscriptionConnect(target, attempt);
   };
 
   // Test = verify AND save AND return (§39: a passing Test auto-saves and takes
@@ -236,7 +306,7 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
           ✓ {subscriptionLabel(p)}{used ? <span className="text-muted font-normal"> · used {used}</span> : ""}
         </span>
       ) : (
-        <span className="block text-[11.5px] text-faint truncate">Run Check to connect {subscriptionLabel(p).replace(" subscription", "")}</span>
+        <span className="block text-[11.5px] text-faint truncate">Connect in one click</span>
       );
     }
     if (p.configured && p.needs_key) {
@@ -284,6 +354,8 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
     removeKey,
     saveField,
     fieldSaved,
+    subscriptionConnect,
+    connectSubscription,
     cancelBackTimer: () => {
       if (backTimer.current) window.clearTimeout(backTimer.current);
     },
@@ -312,16 +384,138 @@ export function ProviderCards({
           key={p.name}
           className={card}
           data-testid={`${tp}-provider-${p.name}`}
-          onClick={() => ps.openProvider(p.name)}
+          onClick={() =>
+            isSubscriptionProvider(p) && !p.configured
+              ? void ps.connectSubscription(p.name)
+              : ps.openProvider(p.name)
+          }
         >
           <ProviderMark name={p.name} title={p.title} />
           <span className="min-w-0 flex-1">
             <span className="block text-[13px] font-semibold leading-tight truncate">{p.title}</span>
             {ps.statusFor(p, { lastUsed })}
           </span>
-          <span className="text-faint text-[14px]">›</span>
+          <span className={isSubscriptionProvider(p) && !p.configured ? "text-accent text-[12px] font-semibold" : "text-faint text-[14px]"}>
+            {isSubscriptionProvider(p) && !p.configured ? "Connect" : "›"}
+          </span>
         </button>
       ))}
+    </div>
+  );
+}
+
+function SubscriptionConnectPanel({ ps, tp }: { ps: ProviderSetupState; tp: string }) {
+  const info = ps.info;
+  if (!info || !isSubscriptionProvider(info)) return null;
+
+  const result = ps.subscriptionConnect;
+  const connected = info.configured || result?.state === "connected";
+  const waiting = result?.state === "authorizing";
+  const missing = result?.state === "missing_runtime";
+  const providerName = info.name === "claude_subscription" ? "Claude" : "ChatGPT";
+  const runtimeName = info.name === "claude_subscription" ? "Claude Code" : "Codex";
+  const runtimeField = info.fields[0];
+
+  return (
+    <div className="mt-4" data-testid={`${tp}-subscription-connect`}>
+      <div
+        className={
+          "rounded-xl border px-4 py-3 " +
+          (connected ? "border-ok/30 bg-okSoft" : "border-line bg-paper")
+        }
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className={
+              "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[12px] font-semibold " +
+              (connected ? "bg-ok text-white" : waiting ? "bg-accent text-white animate-pulse" : "bg-panel border border-line text-muted")
+            }
+            aria-hidden="true"
+          >
+            {connected ? "✓" : waiting ? "…" : "1"}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13.5px] font-semibold text-ink">
+              {connected ? `${providerName} subscription is ready` : `Connect your ${providerName} subscription`}
+            </span>
+            <span className="mt-0.5 block text-[12px] leading-relaxed text-muted">
+              {connected
+                ? `Subscription Bridge will use the ${runtimeName} login already stored on this computer.`
+                : waiting
+                  ? result?.message || "Finish signing in in the browser. This page checks automatically."
+                  : `A secure ${providerName} sign-in page opens in your browser. No API key is needed.`}
+            </span>
+          </span>
+        </div>
+
+        {!connected && (
+          <button
+            className="mt-3 w-full rounded-lg bg-accent px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+            onClick={() => void ps.connectSubscription()}
+            disabled={waiting}
+            data-testid={`${tp}-subscription-connect-button`}
+          >
+            {waiting ? "Waiting for browser sign-in…" : `Connect ${providerName}`}
+          </button>
+        )}
+
+        {connected && (
+          <button
+            className="mt-3 text-[12px] font-medium text-muted hover:text-ink"
+            onClick={() => void ps.connectSubscription()}
+            data-testid={`${tp}-subscription-check-button`}
+          >
+            Check connection again
+          </button>
+        )}
+      </div>
+
+      {result && !result.ok && result.error && (
+        <div className="mt-2 rounded-lg border border-warn/20 bg-warn/5 px-3 py-2 text-[12px] text-warnInk" role="status">
+          {result.error}
+          {missing && result.install_url && (
+            <button
+              className="ml-1 font-semibold underline underline-offset-2"
+              onClick={() => openExternal(result.install_url!)}
+              data-testid={`${tp}-subscription-install`}
+            >
+              Install official {runtimeName} ↗
+            </button>
+          )}
+        </div>
+      )}
+
+      <p className="mt-2 text-[11.5px] leading-relaxed text-faint">
+        Sign-in is handled entirely by the official local {runtimeName} runtime. Subscription Bridge checks only whether it succeeded and never reads or copies the OAuth token.
+      </p>
+
+      {info.name === "claude_subscription" && (
+        <p className="mt-1 text-[11.5px] leading-relaxed text-faint">
+          Community experiment: Anthropic directs third-party products to API-key authentication.{" "}
+          <button
+            className="font-medium underline underline-offset-2 hover:text-ink"
+            onClick={() => openExternal("https://code.claude.com/docs/en/legal-and-compliance#authentication-and-credential-use")}
+          >
+            Review Anthropic's policy ↗
+          </button>
+        </p>
+      )}
+
+      {runtimeField && (
+        <details className="mt-3 text-[12px] text-muted">
+          <summary className="cursor-pointer select-none hover:text-ink">Having trouble? Choose the runtime manually</summary>
+          <label className="mt-2 block text-[12px] text-muted">{runtimeField.label}</label>
+          <input
+            className="mt-1 w-full rounded-lg border border-line bg-panel px-3 py-2 text-[13px] outline-none focus:border-accent"
+            type="text"
+            placeholder={runtimeField.placeholder}
+            value={ps.fields[runtimeField.key] || ""}
+            data-testid={`${tp}-field-${runtimeField.key}`}
+            onChange={(e) => ps.setFieldValue(runtimeField.key, e.target.value)}
+          />
+          {runtimeField.help && <p className="mt-1 text-[11.5px] text-faint">{runtimeField.help}</p>}
+        </details>
+      )}
     </div>
   );
 }
@@ -357,7 +551,9 @@ export function ProviderForm({
       </div>
       {info?.blurb && <p className="text-[11.5px] text-faint mt-1">{info.blurb}</p>}
 
-      {(info?.fields || []).map((f) => {
+      <SubscriptionConnectPanel ps={ps} tp={tp} />
+
+      {!isSubscriptionProvider(info) && (info?.fields || []).map((f) => {
         const keyed = (info?.fields || []).some((x) => x.secret);
         // A keyed provider's base_url is an expert option — it renders BELOW the key-help
         // line as its own advanced section (owner nit 2026-07-19), not inside the loop.
@@ -433,12 +629,6 @@ export function ProviderForm({
           — takes about a minute.
         </p>
       )}
-      {isSubscriptionProvider(info) && (
-        <p className="text-[11.5px] text-faint mt-2">
-          Uses the {subscriptionLabel(info)} already signed in through the official local {info?.name === "claude_subscription" ? "Claude Code" : "Codex"} runtime.
-          No API key or OAuth token is copied into Subscription Bridge.
-        </p>
-      )}
       {info && isLocalProvider(info) && (
         <p className="text-[11.5px] text-faint mt-2">
           No API key needed — Ollama runs models on this Mac.{" "}
@@ -497,7 +687,7 @@ export function ProviderForm({
 
       {/* Error line: fixed height so failures never reflow the form. */}
       <div className="mt-3 min-h-[19px] text-[12.5px]">
-        {ps.verify.state === "error" && <span className="text-warnInk">{ps.verify.msg}</span>}
+        {!isSubscriptionProvider(info) && ps.verify.state === "error" && <span className="text-warnInk">{ps.verify.msg}</span>}
       </div>
       {footer}
     </div>

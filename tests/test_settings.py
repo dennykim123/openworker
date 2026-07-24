@@ -68,6 +68,40 @@ def test_settings_rest_roundtrip(tmp_path, monkeypatch):
     )
 
 
+def test_subscription_connect_rest_routes_to_manager(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from coworker.server.app import create_app
+    from coworker.server.manager import SessionManager
+
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    manager = SessionManager(data_dir=tmp_path / "data")
+    seen: dict = {}
+
+    def start(name, fields=None):
+        seen["start"] = (name, fields)
+        return {"ok": True, "state": "authorizing", "provider": name}
+
+    def status(name):
+        seen["status"] = name
+        return {"ok": True, "state": "connected", "provider": name}
+
+    monkeypatch.setattr(manager, "connect_subscription_provider", start)
+    monkeypatch.setattr(manager, "subscription_connect_status", status)
+    client = TestClient(create_app(manager))
+
+    started = client.post(
+        "/v1/providers/codex/connect", json={"fields": {"codex_bin": "/tmp/codex"}}
+    ).json()
+    checked = client.get("/v1/providers/codex/connect").json()
+    assert started["state"] == "authorizing"
+    assert checked["state"] == "connected"
+    assert seen == {
+        "start": ("codex", {"codex_bin": "/tmp/codex"}),
+        "status": "codex",
+    }
+
+
 def test_default_model_and_onboarding_persist(tmp_path, monkeypatch):
     from fastapi.testclient import TestClient
 

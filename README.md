@@ -24,7 +24,9 @@ For ChatGPT, use a plan with Codex access and make sure `codex login status` rep
 
 For Claude, install Claude Code and sign in with a Claude.ai Pro, Max, Team, or Enterprise account. `claude auth status` must report `authMethod: claude.ai` and `apiProvider: firstParty`.
 
-After launching this fork, open **Models**, choose **ChatGPT Subscription (Codex)** or **Claude Subscription (Claude Code)**, and click **Check**.
+After launching this fork, open **Models** and choose **ChatGPT Subscription (Codex)** or **Claude Subscription (Claude Code)**. One click starts the official runtime's browser sign-in, then the card updates automatically when the login succeeds. No terminal command or token copy is required. If the runtime is missing, the same screen links to its official installer.
+
+> **Claude distribution note:** Anthropic's current [authentication and credential-use policy](https://code.claude.com/docs/en/legal-and-compliance#authentication-and-credential-use) directs third-party products to API-key authentication and says third-party developers may not offer Claude.ai login or route Free, Pro, or Max credentials for users. The Claude subscription path in this community fork is therefore an experimental local integration, not an Anthropic-endorsed distribution path. Use an Anthropic API key for a public, organizational, or policy-cleared deployment.
 
 [![How OpenWorker works](docs/assets/how-it-works.png)](https://openworker.com)
 

@@ -865,6 +865,9 @@ export function App() {
 
   const startNewSession = (forAgent?: string) => {
     const target = forAgent || agent;
+    // Disable sending before the next render replaces the old session socket. Otherwise a very
+    // fast first submit can target the socket being torn down and disappear.
+    setConnected(false);
     setSurface("session"); // return to the conversation view if we were on a sub-view
     setItems([]);
     setStreaming("");
@@ -917,6 +920,15 @@ export function App() {
 
   const openSessionFromInbox = (sid: string, ws: string, ag: string) => selectSession(sid, ws, ag);
   const selectSession = async (id: string, ws: string, ag: string) => {
+    if (id === sessionId && ag === agent) {
+      // The active row is navigation, not a reload button. Keeping its live transcript and socket
+      // also prevents a late history response from overwriting a message sent just after the click.
+      setSurface("session");
+      return;
+    }
+    // Rebinding to a different session disables send until its socket opens. Clicking the
+    // already-active row returns above without touching the existing live socket.
+    setConnected(false);
     setSurface("session"); // selecting a conversation always returns to the conversation view
     setTodo([]);
     setStreaming("");
@@ -938,6 +950,7 @@ export function App() {
   const switchAgent = async (name: string) => {
     setSurface("session");
     if (name === agent) return;
+    setConnected(false);
     rememberLastSession(agent, sessionId, workspace);
     const knownSessions = sessions.length ? sessions : await getSessions().catch(() => []);
     const knownProjects = projects.length ? projects : await getRecentWorkspaces().catch(() => []);

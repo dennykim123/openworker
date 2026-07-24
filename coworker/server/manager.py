@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Optional
@@ -153,6 +154,11 @@ class SessionManager:
         # feeds list_mcp's status so the GUI can show "authorizing…" and failures.
         self._mcp_authorizing: set[str] = set()
         self._mcp_errors: dict[str, str] = {}
+        # Official subscription-runtime logins started from Settings. The app never receives
+        # OAuth credentials: Codex / Claude Code owns the browser flow and its credential store;
+        # we only keep the short-lived child handle so repeated clicks cannot spawn duplicates.
+        self._provider_logins: dict[str, subprocess.Popen] = {}
+        self._provider_login_bins: dict[str, str] = {}
         self.gateway: Optional[Gateway] = None
         self._data_base = base
         # Desktop/UI prefs (default model, onboarding state) — not secrets; a plain JSON file.
@@ -1513,6 +1519,154 @@ class SessionManager:
             codex_bin=codex_bin,
             claude_bin=claude_bin,
         )
+
+    _SUBSCRIPTION_INSTALL_URLS = {
+        "codex": "https://chatgpt.com/download",
+        "claude_subscription": "https://code.claude.com/docs/en/setup",
+    }
+
+    def _subscription_login_details(
+        self, name: str, fields: Optional[dict[str, Any]] = None
+    ) -> tuple[Optional[str], list[str], Optional[dict[str, str]]]:
+        """Resolve the official runtime and its subscription-only login command."""
+        profile = self.secrets.get(f"provider:{name}") or {}
+        fields = fields or {}
+        if name == "codex":
+            from ..providers.codex_subscription_provider import resolve_codex_bin
+
+            configured = (
+                fields.get("codex_bin")
+                or self._provider_login_bins.get(name)
+                or profile.get("codex_bin")
+                or ""
+            )
+            resolved = resolve_codex_bin(str(configured))
+            return resolved, ([resolved, "login"] if resolved else []), None
+        if name == "claude_subscription":
+            from ..providers.claude_subscription_provider import (
+                _subscription_env,
+                resolve_claude_bin,
+            )
+
+            configured = (
+                fields.get("claude_bin")
+                or self._provider_login_bins.get(name)
+                or profile.get("claude_bin")
+                or ""
+            )
+            resolved = resolve_claude_bin(str(configured))
+            return (
+                resolved,
+                [resolved, "auth", "login", "--claudeai"] if resolved else [],
+                _subscription_env(),
+            )
+        return None, [], None
+
+    def subscription_connect_status(self, name: str) -> dict[str, Any]:
+        """Return login progress and finish app setup once the official CLI reports success."""
+        d = get_descriptor(name)
+        if d is None or not getattr(d, "auth_type", "").endswith("_login"):
+            return {
+                "ok": False,
+                "state": "unsupported",
+                "error": "This provider does not use subscription login.",
+            }
+
+        resolved, _, _ = self._subscription_login_details(name)
+        if not resolved:
+            return {
+                "ok": False,
+                "state": "missing_runtime",
+                "error": f"{d.title.split(' (')[0]} is not installed yet.",
+                "install_url": self._SUBSCRIPTION_INSTALL_URLS.get(name),
+            }
+
+        verify_fields = {
+            "codex_bin" if name == "codex" else "claude_bin": resolved
+        }
+        checked = self.verify_provider(name, verify_fields)
+        if checked.get("ok"):
+            saved = self.set_provider(name, verify_fields)
+            self._provider_logins.pop(name, None)
+            self._provider_login_bins.pop(name, None)
+            return {
+                "ok": True,
+                "state": "connected",
+                "provider": name,
+                "recommended_model": saved.get("recommended_model"),
+            }
+
+        proc = self._provider_logins.get(name)
+        if proc is not None and proc.poll() is None:
+            return {
+                "ok": True,
+                "state": "authorizing",
+                "provider": name,
+                "message": "Finish signing in in the browser. This screen will update automatically.",
+            }
+        if proc is not None:
+            self._provider_logins.pop(name, None)
+            self._provider_login_bins.pop(name, None)
+            return {
+                "ok": False,
+                "state": "error",
+                "error": checked.get("error") or "Sign-in did not finish.",
+            }
+        return {
+            "ok": False,
+            "state": "disconnected",
+            "error": checked.get("error") or "Sign in to connect this subscription.",
+        }
+
+    def connect_subscription_provider(
+        self, name: str, fields: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
+        """Start the official CLI's browser login, or connect immediately when already signed in."""
+        current = self.subscription_connect_status(name)
+        if current.get("state") in {"connected", "authorizing", "unsupported"}:
+            return current
+        # An auto-detect miss should still allow the advanced manual executable field to recover.
+        if current.get("state") == "missing_runtime" and not any((fields or {}).values()):
+            return current
+
+        resolved, cmd, env = self._subscription_login_details(name, fields)
+        if not resolved or not cmd:
+            d = get_descriptor(name)
+            return {
+                "ok": False,
+                "state": "missing_runtime",
+                "error": f"{d.title.split(' (')[0] if d else 'Required runtime'} is not installed yet.",
+                "install_url": self._SUBSCRIPTION_INSTALL_URLS.get(name),
+            }
+
+        kwargs: dict[str, Any] = {
+            "stdin": subprocess.DEVNULL,
+            "stdout": subprocess.DEVNULL,
+            "stderr": subprocess.DEVNULL,
+            "env": env,
+        }
+        if sys.platform == "win32":
+            kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) | getattr(
+                subprocess, "DETACHED_PROCESS", 0
+            )
+        else:
+            kwargs["start_new_session"] = True
+        try:
+            proc = subprocess.Popen(cmd, **kwargs)
+        except OSError as exc:
+            return {
+                "ok": False,
+                "state": "error",
+                "error": f"Couldn't start the official login ({exc.__class__.__name__}).",
+            }
+        self._provider_logins[name] = proc
+        self._provider_login_bins[name] = resolved
+        return {
+            "ok": True,
+            "state": "authorizing",
+            "provider": name,
+            "message": "A secure sign-in page is opening in your browser. Finish there; this screen will update automatically.",
+        }
 
     def _model_provider(self, model: str) -> str:
         """The provider a model string routes to (known `prefix:` or the OpenAI default)."""

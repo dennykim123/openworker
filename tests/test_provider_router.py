@@ -342,6 +342,112 @@ def test_manager_claude_provider_tracks_live_subscription(tmp_path, monkeypatch)
     assert "default" in provs["claude_subscription"]["suggested_models"]
 
 
+def test_subscription_connect_finishes_immediately_when_cli_is_already_logged_in(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setattr(
+        "coworker.server.manager.verify_provider_key",
+        lambda name, **kwargs: {"ok": name == "codex"},
+    )
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+    monkeypatch.setattr(
+        mgr,
+        "_subscription_login_details",
+        lambda name, fields=None: ("/tmp/codex", ["/tmp/codex", "login"], None),
+    )
+
+    result = mgr.connect_subscription_provider("codex")
+    assert result["state"] == "connected"
+    assert mgr.secrets.get("provider:codex")["enabled"] is True
+    assert mgr.secrets.get("provider:codex")["codex_bin"] == "/tmp/codex"
+
+
+def test_subscription_connect_starts_one_official_browser_login(tmp_path, monkeypatch):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setattr(
+        "coworker.server.manager.verify_provider_key",
+        lambda name, **kwargs: {"ok": False, "error": "not signed in"},
+    )
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+    monkeypatch.setattr(
+        mgr,
+        "_subscription_login_details",
+        lambda name, fields=None: ("/tmp/codex", ["/tmp/codex", "login"], None),
+    )
+    seen: dict = {}
+
+    class FakeProcess:
+        pid = 42
+
+        def poll(self):
+            return None
+
+    def fake_popen(cmd, **kwargs):
+        seen["cmd"] = cmd
+        seen["kwargs"] = kwargs
+        return FakeProcess()
+
+    monkeypatch.setattr("subprocess.Popen", fake_popen)
+
+    first = mgr.connect_subscription_provider("codex")
+    second = mgr.connect_subscription_provider("codex")
+    assert first["state"] == second["state"] == "authorizing"
+    assert seen["cmd"] == ["/tmp/codex", "login"]
+    assert seen["kwargs"]["stdin"] is not None
+
+
+def test_subscription_connect_reports_official_install_link_when_runtime_is_missing(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+    monkeypatch.setattr(
+        mgr,
+        "_subscription_login_details",
+        lambda name, fields=None: (None, [], None),
+    )
+    result = mgr.connect_subscription_provider("claude_subscription")
+    assert result["state"] == "missing_runtime"
+    assert result["install_url"].startswith("https://code.claude.com/")
+
+
+def test_subscription_connect_manual_runtime_recovers_from_auto_detect_miss(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setattr(
+        "coworker.server.manager.verify_provider_key",
+        lambda name, **kwargs: {"ok": False, "error": "not signed in"},
+    )
+    from coworker.server.manager import SessionManager
+
+    mgr = SessionManager(data_dir=tmp_path)
+
+    def login_details(name, fields=None):
+        resolved = (fields or {}).get("codex_bin")
+        return resolved, ([resolved, "login"] if resolved else []), None
+
+    monkeypatch.setattr(mgr, "_subscription_login_details", login_details)
+
+    class FakeProcess:
+        def poll(self):
+            return None
+
+    monkeypatch.setattr("subprocess.Popen", lambda cmd, **kwargs: FakeProcess())
+    result = mgr.connect_subscription_provider(
+        "codex", {"codex_bin": "/Applications/Codex.app/Contents/MacOS/codex"}
+    )
+    assert result["state"] == "authorizing"
+    assert mgr._provider_login_bins["codex"].endswith("/codex")
+
+
 def test_manager_curated_models(tmp_path, monkeypatch):
     """No seed list: the picker is the curated matrix filtered to key-holding providers,
     plus user-added custom ids. A fresh install shows only the (not-yet-usable) default.
