@@ -80,6 +80,11 @@ def test_complete_uses_output_file_and_omits_model_for_default(monkeypatch):
     assert turn.tool_calls == []
     assert "-m" not in seen["cmd"]
     assert "Say hello" in str(seen["input"])
+    assert "--ephemeral" in seen["cmd"]
+    assert seen["cmd"][seen["cmd"].index("--sandbox") + 1] == "read-only"
+    assert "--ignore-user-config" in seen["cmd"]
+    assert "--ignore-rules" in seen["cmd"]
+    assert "Never use shell, web, file, MCP" in str(seen["input"])
 
 
 def test_complete_parses_tool_calls(monkeypatch):

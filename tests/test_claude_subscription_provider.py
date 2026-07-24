@@ -106,8 +106,12 @@ def test_complete_disables_native_tools_and_parses_structured_output(monkeypatch
     assert turn.tool_calls == []
     assert seen["cmd"][seen["cmd"].index("--tools") + 1] == ""
     assert "--no-session-persistence" in seen["cmd"]
+    assert seen["cmd"][seen["cmd"].index("--setting-sources") + 1] == ""
+    assert "--strict-mcp-config" in seen["cmd"]
+    assert seen["cmd"][seen["cmd"].index("--permission-mode") + 1] == "dontAsk"
     assert "--model" not in seen["cmd"]
     assert "Say hello" in seen["input"]
+    assert "Never use shell, web, file, MCP" in seen["input"]
 
 
 def test_complete_parses_openworker_tool_calls(monkeypatch):
