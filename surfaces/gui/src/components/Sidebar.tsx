@@ -1002,7 +1002,12 @@ export function Sidebar(props: Props) {
             <Icon name="sidebar" size={16} />
           </button>
         )}
-        <div className="brand-wordmark text-[15px]">OpenWorker<span className="beta-tag">COMMUNITY FORK</span></div>
+        <div className="brand-wordmark text-[15px]">
+          OpenWorker
+          <span className="beta-tag" aria-label="Community fork" title="Unofficial community fork">
+            FORK
+          </span>
+        </div>
       </div>
 
       {/* New session: split button — primary starts the last-used persona; ▾ picks a specific one. */}

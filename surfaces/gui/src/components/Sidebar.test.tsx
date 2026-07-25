@@ -72,6 +72,18 @@ afterEach(() => {
 });
 
 describe("Sidebar group/filter control", () => {
+  it("shows the fork disclosure without clipping the long community label", async () => {
+    stubFetch([
+      { match: "/v1/personas", method: "GET", json: PERSONAS },
+      { match: "/v1/settings", method: "GET", json: { nav_layout: "flat" } },
+    ]);
+    render(<Sidebar {...baseProps} />);
+
+    const badge = await screen.findByLabelText("Community fork");
+    expect(badge.textContent).toBe("FORK");
+    expect(badge.getAttribute("title")).toBe("Unofficial community fork");
+  });
+
   it("choosing Persona persists via setNavLayout and switches to the per-persona accordion", async () => {
     const calls = stubFetch([
       { match: "/v1/personas", method: "GET", json: PERSONAS },
