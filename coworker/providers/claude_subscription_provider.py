@@ -21,6 +21,7 @@ from .codex_subscription_provider import (
     _build_prompt,
     _parse_tool_calls,
 )
+from .local_cli import local_cli_env
 
 _SUBSCRIPTION_AUTH = "claude.ai"
 _API_ENV_VARS = (
@@ -33,11 +34,11 @@ _API_ENV_VARS = (
 )
 
 
-def _subscription_env() -> dict[str, str]:
+def _subscription_env(executable: Optional[str] = None) -> dict[str, str]:
     env = os.environ.copy()
     for key in _API_ENV_VARS:
         env.pop(key, None)
-    return env
+    return local_cli_env(executable, env)
 
 
 def _resolve_candidate(raw: str) -> Optional[str]:
@@ -78,7 +79,7 @@ def verify_claude_subscription(
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=_subscription_env(),
+            env=_subscription_env(resolved),
         )
     except FileNotFoundError:
         return {"ok": False, "error": "Claude Code executable is unavailable."}
@@ -172,7 +173,7 @@ class ClaudeSubscriptionProvider(ProviderClient):
                     text=True,
                     timeout=timeout,
                     cwd=tmp,
-                    env=_subscription_env(),
+                    env=_subscription_env(claude_bin),
                 )
             except subprocess.TimeoutExpired as exc:
                 raise RuntimeError("Claude Code timed out while answering.") from exc

@@ -1536,6 +1536,7 @@ class SessionManager:
         fields = fields or {}
         if name == "codex":
             from ..providers.codex_subscription_provider import resolve_codex_bin
+            from ..providers.local_cli import local_cli_env
 
             configured = (
                 fields.get("codex_bin")
@@ -1544,7 +1545,11 @@ class SessionManager:
                 or ""
             )
             resolved = resolve_codex_bin(str(configured))
-            return resolved, ([resolved, "login"] if resolved else []), None
+            return (
+                resolved,
+                [resolved, "login"] if resolved else [],
+                local_cli_env(resolved) if resolved else None,
+            )
         if name == "claude_subscription":
             from ..providers.claude_subscription_provider import (
                 _subscription_env,
@@ -1561,7 +1566,7 @@ class SessionManager:
             return (
                 resolved,
                 [resolved, "auth", "login", "--claudeai"] if resolved else [],
-                _subscription_env(),
+                _subscription_env(resolved),
             )
         if name == "gemini_subscription":
             from ..providers.gemini_subscription_provider import (
@@ -1585,7 +1590,7 @@ class SessionManager:
                 [resolved, "--list-sessions", "--output-format", "json"]
                 if resolved
                 else [],
-                subscription_env(policy),
+                subscription_env(policy, executable=resolved),
             )
         return None, [], None
 

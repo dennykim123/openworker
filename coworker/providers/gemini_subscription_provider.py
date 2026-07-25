@@ -19,6 +19,7 @@ from typing import Any, Optional
 from .base import AssistantTurn, ModelCapabilities, ProviderClient
 from .capabilities import capabilities_for
 from .codex_subscription_provider import _build_prompt, _parse_tool_calls
+from .local_cli import local_cli_env
 
 _GOOGLE_AUTH_SETTINGS = {
     "security": {
@@ -63,7 +64,12 @@ def write_google_auth_settings(path: Path) -> Path:
     return path
 
 
-def subscription_env(settings_path: Path, *, no_browser: bool = False) -> dict[str, str]:
+def subscription_env(
+    settings_path: Path,
+    *,
+    no_browser: bool = False,
+    executable: Optional[str] = None,
+) -> dict[str, str]:
     env = os.environ.copy()
     for key in _NON_SUBSCRIPTION_ENV_VARS:
         env.pop(key, None)
@@ -74,7 +80,7 @@ def subscription_env(settings_path: Path, *, no_browser: bool = False) -> dict[s
         env["NO_BROWSER"] = "true"
     else:
         env.pop("NO_BROWSER", None)
-    return env
+    return local_cli_env(executable, env)
 
 
 def _oauth_credentials_path() -> Path:
@@ -165,7 +171,9 @@ class GeminiSubscriptionProvider(ProviderClient):
                     text=True,
                     timeout=timeout,
                     cwd=tmp,
-                    env=subscription_env(policy, no_browser=True),
+                    env=subscription_env(
+                        policy, no_browser=True, executable=gemini_bin
+                    ),
                 )
             except subprocess.TimeoutExpired as exc:
                 raise RuntimeError("Gemini CLI timed out while answering.") from exc

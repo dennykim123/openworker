@@ -23,17 +23,21 @@ def test_resolve_codex_bin_invalid_explicit_path_fails_closed(monkeypatch):
 
 
 def test_verify_codex_subscription_accepts_chatgpt_login(monkeypatch):
+    seen: dict[str, object] = {}
     monkeypatch.setattr(
         "coworker.providers.codex_subscription_provider.resolve_codex_bin",
-        lambda configured=None: "/tmp/codex",
+        lambda configured=None: "/opt/homebrew/bin/codex",
     )
-    monkeypatch.setattr(
-        "subprocess.run",
-        lambda *args, **kwargs: SimpleNamespace(
+
+    def fake_run(*args, **kwargs):
+        seen["env"] = kwargs["env"]
+        return SimpleNamespace(
             returncode=0, stdout="Logged in using ChatGPT\n", stderr=""
-        ),
-    )
+        )
+
+    monkeypatch.setattr("subprocess.run", fake_run)
     assert verify_codex_subscription()["ok"] is True
+    assert str(seen["env"]["PATH"]).split(":")[0] == "/opt/homebrew/bin"
 
 
 def test_verify_codex_subscription_rejects_api_key_login(monkeypatch):

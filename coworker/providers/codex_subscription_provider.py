@@ -17,6 +17,7 @@ from typing import Any, Optional
 
 from .base import AssistantTurn, ModelCapabilities, ProviderClient, ToolCall
 from .capabilities import capabilities_for
+from .local_cli import local_cli_env
 
 _KNOWN_MACOS_BINS = [
     "/Applications/ChatGPT.app/Contents/Resources/codex",
@@ -101,6 +102,7 @@ def verify_codex_subscription(
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=local_cli_env(resolved),
         )
     except FileNotFoundError:
         return {"ok": False, "error": "Codex executable is unavailable."}
@@ -321,6 +323,7 @@ class CodexSubscriptionProvider(ProviderClient):
                     capture_output=True,
                     text=True,
                     timeout=timeout,
+                    env=local_cli_env(codex_bin),
                 )
             except subprocess.TimeoutExpired as exc:
                 raise RuntimeError("Codex timed out while answering.") from exc
