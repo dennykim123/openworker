@@ -123,11 +123,11 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
           <section data-testid="ob-step-model" className="flex-1 min-h-0 flex flex-col">
             {/* Persistent header — stays put while the region below swaps (§39). */}
             <h1 className="text-[19px] font-semibold">
-              Welcome to OpenWorker Subscription Bridge<span className="beta-tag">COMMUNITY FORK</span>
+              Welcome to MeowWorker<span className="beta-tag">BUILT ON OPENWORKER</span>
             </h1>
             <p className="text-[13px] text-muted mt-0.5 mb-4">
-              Pick a model provider to get started. Use your own API key, a local model, or an
-              existing ChatGPT or Claude subscription. Credentials stay on this Mac; prompts go to your chosen provider.
+              Your AI coworker that gets things done. Connect an API key, a local model, or an
+              existing ChatGPT, Claude, or Gemini subscription. Credentials stay on this Mac.
             </p>
 
             {!ps.sel ? (

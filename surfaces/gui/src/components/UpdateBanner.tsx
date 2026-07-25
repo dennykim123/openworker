@@ -90,7 +90,7 @@ export function UpdateBanner() {
     >
       <div className="text-[13px] font-semibold">Update available</div>
       <div className="text-[12px] text-muted mt-0.5">
-        OpenWorker Subscription Bridge v{update.version} is ready to install.
+        MeowWorker v{update.version} is ready to install.
       </div>
       {phase === "error" && (
         <div className="text-[11.5px] text-warnInk mt-1.5">

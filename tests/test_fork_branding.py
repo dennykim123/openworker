@@ -1,4 +1,4 @@
-"""Regression checks that keep the community fork distinct from upstream releases."""
+"""Regression checks that keep MeowWorker distinct from upstream releases."""
 
 from __future__ import annotations
 
@@ -25,36 +25,38 @@ def test_desktop_identity_and_update_channel_are_fork_specific() -> None:
         (ROOT / "surfaces/gui/src-tauri/tauri.conf.json").read_text(encoding="utf-8")
     )
 
-    assert config["productName"] == "OpenWorker Subscription Bridge"
-    assert config["identifier"] == "com.dennykim.openworkersubscriptionbridge"
-    assert config["version"] == "0.1.10"
+    assert config["productName"] == "MeowWorker"
+    assert config["identifier"] == "com.dennykim.meowworker"
+    assert config["version"] == "0.2.0"
 
     endpoints = config["plugins"]["updater"]["endpoints"]
     assert endpoints == [
-        "https://github.com/dennykim123/openworker-subscription-bridge/"
+        "https://github.com/dennykim123/meowworker/"
         "releases/latest/download/latest.json"
     ]
     assert all("andrewyng/openworker" not in endpoint for endpoint in endpoints)
     assert all("download.openworker.com" not in endpoint for endpoint in endpoints)
 
 
-def test_readme_leads_with_unofficial_fork_disclosure() -> None:
+def test_readme_leads_with_independent_product_disclosure() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert readme.startswith("# OpenWorker Subscription Bridge\n")
-    assert "Unofficial community fork of OpenWorker" in readme
+    assert readme.startswith("# MeowWorker\n")
+    assert "Your AI coworker that gets things done." in readme
+    assert "Built on [OpenWorker]" in readme
+    assert "MeowWorker is an independent product built from the open-source OpenWorker project." in readme
     assert "not affiliated with OpenWorker, OpenAI, Anthropic, or Google" in readme
 
 
-def test_release_artifacts_use_the_bridge_name() -> None:
+def test_release_artifacts_use_the_meowworker_name() -> None:
     workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
     manifest = (ROOT / "packaging/make_update_manifest.py").read_text(
         encoding="utf-8"
     )
 
     stable_names = (
-        "OpenWorker-Subscription-Bridge-macos-arm64.app.tar.gz",
-        "OpenWorker-Subscription-Bridge-windows-setup.exe",
+        "MeowWorker-macos-arm64.app.tar.gz",
+        "MeowWorker-windows-setup.exe",
     )
     for name in stable_names:
         assert name in manifest
@@ -63,5 +65,5 @@ def test_release_artifacts_use_the_bridge_name() -> None:
         )
         assert workflow_name in workflow or name in workflow
 
-    assert "out/OpenWorker-windows-setup.exe" not in workflow
-    assert "out/OpenWorker-macos-arm64.dmg" not in workflow
+    assert "OpenWorker-Subscription-Bridge" not in workflow
+    assert "OpenWorker-Subscription-Bridge" not in manifest

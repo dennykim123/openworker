@@ -21,6 +21,12 @@ test("Settings opens as a full page and navigates sections", async ({ page }) =>
 
   // The Files card lives inside General.
   await expect(page.getByText("Each conversation gets its own folder")).toBeVisible();
+  const about = page.getByTestId("meowworker-about");
+  await expect(about).toContainText("Your AI coworker that gets things done.");
+  await expect(about).toContainText(
+    "MeowWorker is an independent product built from the open-source OpenWorker project.",
+  );
+  await expect(about.locator("img")).toBeVisible();
 
   await page.getByRole("button", { name: "Models", exact: true }).click();
   await expect(page.getByTestId("set-provider-openai")).toBeVisible();
@@ -44,6 +50,17 @@ test("Models: provider gallery states; vendor form previews models", async ({ pa
   await page.getByTestId("account-row").click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Models", exact: true }).click();
+
+  const subscriptions = page.getByTestId("subscription-providers");
+  const apiAndLocal = page.getByTestId("api-local-providers");
+  await expect(subscriptions.getByText("Subscriptions", { exact: true })).toBeVisible();
+  await expect(subscriptions.getByTestId("set-provider-codex")).toBeVisible();
+  await expect(subscriptions.getByTestId("set-provider-claude_subscription")).toBeVisible();
+  await expect(subscriptions.getByTestId("set-provider-gemini_subscription")).toBeVisible();
+  await expect(subscriptions.getByTestId("set-provider-openai")).toHaveCount(0);
+  await expect(apiAndLocal.getByText("API & local providers", { exact: true })).toBeVisible();
+  await expect(apiAndLocal.getByTestId("set-provider-openai")).toBeVisible();
+  expect((await subscriptions.boundingBox())!.y).toBeLessThan((await apiAndLocal.boundingBox())!.y);
 
   // Card states from the fixtures: openai configured+used, anthropic configured, zai not.
   await expect(page.getByTestId("set-provider-openai")).toContainText("✓ Connected · used 2h ago");

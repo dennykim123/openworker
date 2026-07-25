@@ -1003,10 +1003,8 @@ export function Sidebar(props: Props) {
           </button>
         )}
         <div className="brand-wordmark text-[15px]">
-          OpenWorker
-          <span className="beta-tag" aria-label="Community fork" title="Unofficial community fork">
-            FORK
-          </span>
+          <Icon name="logo" size={18} className="mark inline-block mr-1.5 align-[-4px]" />
+          MeowWorker
         </div>
       </div>
 

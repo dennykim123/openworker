@@ -36,6 +36,7 @@ def test_settings_rest_roundtrip(tmp_path, monkeypatch):
 
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("HOME", str(tmp_path))
     manager = SessionManager(data_dir=tmp_path / "data")
     client = TestClient(create_app(manager))
 
@@ -109,6 +110,7 @@ def test_default_model_and_onboarding_persist(tmp_path, monkeypatch):
     from coworker.server.manager import SessionManager
 
     monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("HOME", str(tmp_path))
     data_dir = tmp_path / "data"
     client = TestClient(create_app(SessionManager(data_dir=data_dir)))
 
@@ -171,11 +173,12 @@ def test_scratch_base_setting_persists_and_drives_provisioning(tmp_path, monkeyp
     from coworker.server.manager import SessionManager
 
     monkeypatch.setenv("COWORKER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("HOME", str(tmp_path))
     data_dir = tmp_path / "data"
     client = TestClient(create_app(SessionManager(data_dir=data_dir)))
 
-    # New conversations use the fork-branded folder; persisted preferences continue to win.
-    assert client.get("/v1/settings").json()["scratch_base"] == "~/OpenWorker Subscription Bridge"
+    # New conversations use the product folder; persisted preferences continue to win.
+    assert client.get("/v1/settings").json()["scratch_base"] == "~/MeowWorker"
 
     base = tmp_path / "my coworker files"
     resp = client.post("/v1/settings/scratch-base", json={"path": str(base)}).json()
@@ -191,6 +194,19 @@ def test_scratch_base_setting_persists_and_drives_provisioning(tmp_path, monkeyp
     assert reborn.get_settings()["scratch_base"] == str(base)
     scratch = reborn._provision_scratch("sess-xyz")
     assert Path(scratch) == (base / "sess-xyz").resolve() and Path(scratch).is_dir()
+
+
+def test_existing_default_scratch_folder_survives_product_rename(tmp_path, monkeypatch):
+    from coworker.server.manager import SessionManager
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    legacy = tmp_path / "OpenWorker Subscription Bridge"
+    legacy.mkdir()
+
+    manager = SessionManager(data_dir=tmp_path / "data")
+
+    assert manager.get_settings()["scratch_base"] == "~/OpenWorker Subscription Bridge"
+    assert manager.scratch_base() == legacy
 
 
 def test_ollama_models_gated_on_liveness(tmp_path, monkeypatch):

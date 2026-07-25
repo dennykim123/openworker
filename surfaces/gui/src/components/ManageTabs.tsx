@@ -29,7 +29,12 @@ import {
 } from "../api";
 import { CloudSignInInline, CloudStatusPending } from "./connectors/CloudSignIn";
 import { ModelChecklist } from "./ModelChecklist";
-import { ProviderCards, ProviderForm, useProviderSetup } from "../providers/ProviderSetup";
+import {
+  isSubscriptionProvider,
+  ProviderCards,
+  ProviderForm,
+  useProviderSetup,
+} from "../providers/ProviderSetup";
 import { Toggle } from "./Toggle";
 
 // "2h ago"-style label for the providers' Last-used line (null when never used).
@@ -87,11 +92,36 @@ export function ModelsTab() {
 
   const info = ps.info;
   const knownNames = ps.providers.map((p) => p.name);
+  const subscriptionProviders = ps.ordered.filter(isSubscriptionProvider);
+  const apiAndLocalProviders = ps.ordered.filter((p) => !isSubscriptionProvider(p));
 
   if (ps.sel === null) {
     return (
       <div>
-        <ProviderCards ps={ps} tp="set" gridClass="grid grid-cols-2 xl:grid-cols-3 gap-2.5" lastUsed />
+        <section data-testid="subscription-providers">
+          <div className={SEC_H + " mb-1.5"}>Subscriptions</div>
+          <p className="text-[12px] text-muted mb-2.5 leading-relaxed">
+            Connect an existing ChatGPT, Claude, or Gemini plan without an API key.
+          </p>
+          <ProviderCards
+            ps={ps}
+            tp="set"
+            providers={subscriptionProviders}
+            gridClass="grid grid-cols-1 md:grid-cols-3 gap-2.5"
+            lastUsed
+          />
+        </section>
+
+        <section className="mt-6" data-testid="api-local-providers">
+          <div className={SEC_H + " mb-1.5"}>API &amp; local providers</div>
+          <ProviderCards
+            ps={ps}
+            tp="set"
+            providers={apiAndLocalProviders}
+            gridClass="grid grid-cols-2 xl:grid-cols-3 gap-2.5"
+            lastUsed
+          />
+        </section>
         <ComposerPickerCard settings={settings} providers={ps.providers} onChanged={refreshSettings} />
       </div>
     );
@@ -736,7 +766,7 @@ export function ConnectorTools({ c, onChanged }: { c: Connector; onChanged: () =
     );
   return (
     <div className="border-t border-line px-3.5 py-3">
-      <div className={SEC_H + " mb-2"}>Tools exposed to Subscription Bridge</div>
+      <div className={SEC_H + " mb-2"}>Tools exposed to MeowWorker</div>
       <div className="space-y-1.5">
         {c.tools.map((tool) => (
           <label

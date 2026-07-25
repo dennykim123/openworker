@@ -24,7 +24,7 @@ function stubFetch(routes: { match: string; method?: string; json: any }[]) {
 
 const PERSONAS = {
   personas: [
-    { id: "cowork", name: "OpenWorker Subscription Bridge", icon: "cowork", tagline: "general assistant", family: "knowledge", enabled: true, surfaced: true, default: true },
+    { id: "cowork", name: "MeowWorker", icon: "cowork", tagline: "general assistant", family: "knowledge", enabled: true, surfaced: true, default: true },
     { id: "ops", name: "Ops", icon: "ops", tagline: "incidents, runbooks", family: "code", enabled: true, surfaced: true, default: false },
     { id: "code", name: "Code", icon: "code", tagline: "repository work", family: "code", enabled: true, surfaced: true, default: false },
     { id: "secret", name: "Disabled One", icon: "cowork", tagline: "off", family: "knowledge", enabled: false, surfaced: false, default: false },
@@ -72,16 +72,16 @@ afterEach(() => {
 });
 
 describe("Sidebar group/filter control", () => {
-  it("shows the fork disclosure without clipping the long community label", async () => {
+  it("shows the compact MeowWorker wordmark without a title-side provenance chip", async () => {
     stubFetch([
       { match: "/v1/personas", method: "GET", json: PERSONAS },
       { match: "/v1/settings", method: "GET", json: { nav_layout: "flat" } },
     ]);
     render(<Sidebar {...baseProps} />);
 
-    const badge = await screen.findByLabelText("Community fork");
-    expect(badge.textContent).toBe("FORK");
-    expect(badge.getAttribute("title")).toBe("Unofficial community fork");
+    const wordmark = await screen.findByText("MeowWorker", { exact: true });
+    expect(wordmark.querySelector("img")).not.toBeNull();
+    expect(screen.queryByLabelText("Built on OpenWorker")).toBeNull();
   });
 
   it("choosing Persona persists via setNavLayout and switches to the per-persona accordion", async () => {

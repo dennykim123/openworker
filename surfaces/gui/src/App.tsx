@@ -1131,7 +1131,8 @@ export function App() {
         {overlay && (
           <div className="titlebar-drag" data-tauri-drag-region>
             <span className="titlebar-brand brand-wordmark">
-              <Icon name="logo" size={13} className="mark" /> OpenWorker<span className="beta-tag">COMMUNITY FORK</span>
+              <Icon name="logo" size={15} className="mark" /> MeowWorker
+              <span className="beta-tag" title="Built on OpenWorker">BUILT ON OW</span>
             </span>
           </div>
         )}
@@ -1140,14 +1141,12 @@ export function App() {
             <span /><span /><span />
           </div>
         )}
-        {/* The real OpenWorker mark (6-point star, same as the app/tray icon) — the old
-            ✦ text glyph was a 4-point sparkle that read as another product's logo. */}
         <div className="boot-mark">
-          <Icon name="logo" size={38} />
+          <Icon name="logo" size={72} />
         </div>
         <div className="boot-text">
-          {resumedExisting ? "Restoring your session…" : "Starting OpenWorker Subscription Bridge…"}
-          <span className="beta-tag">COMMUNITY FORK</span>
+          {resumedExisting ? "Restoring your session…" : "Starting MeowWorker…"}
+          <span className="beta-tag">BUILT ON OPENWORKER</span>
         </div>
       </div>
     );

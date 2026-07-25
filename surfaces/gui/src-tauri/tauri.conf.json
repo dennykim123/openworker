@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "OpenWorker Subscription Bridge",
-  "version": "0.1.10",
-  "identifier": "com.dennykim.openworkersubscriptionbridge",
+  "productName": "MeowWorker",
+  "version": "0.2.0",
+  "identifier": "com.dennykim.meowworker",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -19,7 +19,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "publisher": "OpenWorker Subscription Bridge Community",
+    "publisher": "MeowWorker",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -46,7 +46,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/dennykim123/openworker-subscription-bridge/releases/latest/download/latest.json"
+        "https://github.com/dennykim123/meowworker/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVCNzEzRjY5OTkzNUNBNjkKUldScHlqV1phVDl4VzBvTnFLLytzaDkzNVd3WWNuUm8yNE95WTBFNnBtcGF1RENxeTRuNVhQeloK",
       "windows": {

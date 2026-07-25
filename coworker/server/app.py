@@ -72,7 +72,7 @@ def _browser_page(
     return (
         "<!doctype html><html><head><meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-        f"<title>{_html.escape(title)} — OpenWorker Subscription Bridge</title><style>"
+        f"<title>{_html.escape(title)} — MeowWorker</title><style>"
         ":root{--paper:#f6f5f2;--panel:#fff;--line:#e4e2dc;--ink:#2c2c2a;--muted:#6f6e68;"
         "--faint:#a3a19a;--accent:#3670b2;--ok:#2e7d4f;--ok-soft:#e3f2e9;--bad:#b3423a;"
         "--bad-soft:#f8e7e5}"
@@ -104,9 +104,9 @@ def _browser_page(
         "padding:7px 10px;margin-top:12px;text-align:left;word-break:break-word}"
         ".foot{font-size:10.5px;color:var(--faint)}"
         "</style></head><body>"
-        '<div class="card"><div class="mark"><i></i>OpenWorker Subscription Bridge</div>'
+        '<div class="card"><div class="mark"><i></i>MeowWorker</div>'
         f"{icon}<h1>{_html.escape(title)}</h1><p>{_html.escape(detail)}</p>{err}</div>"
-        '<div class="foot">Served locally by OpenWorker Subscription Bridge</div>'
+        '<div class="foot">Served locally by MeowWorker · Built on OpenWorker</div>'
         "</body></html>"
     )
 
@@ -121,7 +121,7 @@ def _connector_title(name: str) -> str:
 
 _CONNECT_FAILED_DETAIL = (
     "Something went wrong finishing this connection. "
-    "Close this tab and try again from OpenWorker Subscription Bridge."
+    "Close this tab and try again from MeowWorker."
 )
 
 from ..attachments import build_user_content
@@ -624,7 +624,7 @@ def create_app(manager: SessionManager) -> FastAPI:
             return HTMLResponse(
                 _browser_page(
                     "Sign-in failed",
-                    "The service reported an error. Return to OpenWorker Subscription Bridge and try again.",
+                    "The service reported an error. Return to MeowWorker and try again.",
                     ok=False,
                     error=error,
                 ),
@@ -634,7 +634,7 @@ def create_app(manager: SessionManager) -> FastAPI:
             return HTMLResponse(
                 _browser_page(
                     "Nothing waiting for this sign-in",
-                    "The sign-in may have timed out. Return to OpenWorker Subscription Bridge and start it again.",
+                    "The sign-in may have timed out. Return to MeowWorker and start it again.",
                     ok=False,
                 ),
                 status_code=400,
@@ -642,7 +642,7 @@ def create_app(manager: SessionManager) -> FastAPI:
         return HTMLResponse(
             _browser_page(
                 "Connected",
-                "Sign-in complete. You can close this tab and return to OpenWorker Subscription Bridge.",
+                "Sign-in complete. You can close this tab and return to MeowWorker.",
                 ok=True,
             )
         )
@@ -910,7 +910,7 @@ def create_app(manager: SessionManager) -> FastAPI:
         from ..config import load_config
 
         signin_failed_detail = (
-            "Close this tab and try signing in again from OpenWorker Subscription Bridge."
+            "Close this tab and try signing in again from MeowWorker."
         )
         if error:
             return HTMLResponse(
@@ -952,7 +952,7 @@ def create_app(manager: SessionManager) -> FastAPI:
             _browser_page(
                 "Signed in",
                 "You're signed in to OpenWorker Cloud. "
-                "You can close this tab and return to OpenWorker Subscription Bridge.",
+                "You can close this tab and return to MeowWorker.",
             )
         )
 
@@ -1033,7 +1033,7 @@ def create_app(manager: SessionManager) -> FastAPI:
             return HTMLResponse(
                 _browser_page(
                     "GitHub connected",
-                    "You can close this tab and return to OpenWorker Subscription Bridge.",
+                    "You can close this tab and return to MeowWorker.",
                     connector="github",
                 )
             )
@@ -1096,7 +1096,7 @@ def create_app(manager: SessionManager) -> FastAPI:
         return HTMLResponse(
             _browser_page(
                 f"{_connector_title(connector)} connected",
-                "You can close this tab and return to OpenWorker Subscription Bridge.",
+                "You can close this tab and return to MeowWorker.",
                 connector=connector,
             )
         )

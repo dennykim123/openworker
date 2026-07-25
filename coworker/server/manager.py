@@ -266,12 +266,22 @@ class SessionManager:
             out.append({"path": path, "name": p.name, "exists": p.is_dir()})
         return out
 
-    DEFAULT_SCRATCH_BASE = "~/OpenWorker Subscription Bridge"
+    DEFAULT_SCRATCH_BASE = "~/MeowWorker"
+    LEGACY_SCRATCH_BASE = "~/OpenWorker Subscription Bridge"
+
+    def _scratch_base_value(self) -> str:
+        configured = self._prefs.get("scratch_base")
+        if configured:
+            return str(configured)
+        # A renamed install keeps using the old default when it already contains work.
+        # Fresh installs get the MeowWorker folder without orphaning existing sessions.
+        if Path(self.LEGACY_SCRATCH_BASE).expanduser().exists():
+            return self.LEGACY_SCRATCH_BASE
+        return self.DEFAULT_SCRATCH_BASE
 
     def scratch_base(self) -> Path:
         """Common area for per-conversation scratch directories. Configurable via prefs."""
-        base = self._prefs.get("scratch_base") or self.DEFAULT_SCRATCH_BASE
-        return Path(base).expanduser()
+        return Path(self._scratch_base_value()).expanduser()
 
     def _provision_scratch(self, session_id: str) -> str:
         """Create (idempotently) and return this conversation's scratch directory."""
@@ -1909,8 +1919,7 @@ class SessionManager:
             "surfaces": self._surfaces(),
             "nav_layout": self._nav_layout(),
             "sessions_peek": self.sessions_peek(),
-            "scratch_base": self._prefs.get("scratch_base")
-            or self.DEFAULT_SCRATCH_BASE,
+            "scratch_base": self._scratch_base_value(),
             # Real on-disk secrets location, so the UI shows the OS-native path instead of a
             # hardcoded POSIX one (Windows -> %APPDATA%\coworker, macOS/Linux -> ~/.config).
             "secrets_path": str(self.secrets.path),
@@ -2049,7 +2058,7 @@ class SessionManager:
 
     def set_scratch_base(self, path: str) -> dict[str, Any]:
         """Set + persist the common area where each Cowork conversation's scratch directory is
-        created (default ~/OpenWorker Subscription Bridge). The raw value is stored so the UI shows it as entered;
+        created (default ~/MeowWorker). The raw value is stored so the UI shows it as entered;
         new conversations use it immediately (existing ones keep their provisioned dir).
         """
         path = (path or "").strip()

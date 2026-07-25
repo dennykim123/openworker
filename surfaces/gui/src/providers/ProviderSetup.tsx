@@ -36,7 +36,7 @@ export const KEY_HELP: Record<string, { url: string; label: string }> = {
 
 export type Verify = { state: "idle" | "testing" | "ok" | "error"; msg?: string };
 
-function isSubscriptionProvider(info?: ProviderInfo | null): boolean {
+export function isSubscriptionProvider(info?: ProviderInfo | null): boolean {
   return !!info && (info.auth_type?.endsWith("_login") || ["codex", "claude_subscription", "gemini_subscription"].includes(info.name));
 }
 
@@ -44,6 +44,10 @@ function subscriptionLabel(info?: ProviderInfo | null): string {
   if (info?.name === "claude_subscription") return "Claude subscription";
   if (info?.name === "gemini_subscription") return "Gemini subscription";
   return "ChatGPT subscription";
+}
+
+function providerCardTitle(info: ProviderInfo): string {
+  return isSubscriptionProvider(info) ? info.title.split(" (")[0] : info.title;
 }
 
 function isLocalProvider(info?: ProviderInfo | null): boolean {
@@ -148,7 +152,7 @@ export function useProviderSetup(opts?: { onSaved?: () => void }): ProviderSetup
   }, []);
 
   const info = providers.find((p) => p.name === sel);
-  // Codex owns its ChatGPT OAuth session outside Subscription Bridge. It is connected when the
+  // Codex owns its ChatGPT OAuth session outside MeowWorker. It is connected when the
   // sidecar confirms the official local runtime is logged in, even though no API key is saved.
   const credentialed = !!info?.configured && (!!info?.needs_key || isSubscriptionProvider(info));
 
@@ -371,17 +375,19 @@ export function ProviderCards({
   tp,
   gridClass = "grid grid-cols-2 gap-2.5",
   lastUsed = false,
+  providers,
 }: {
   ps: ProviderSetupState;
   tp: string; // testid prefix ("ob" onboarding, "set" settings)
   gridClass?: string;
   lastUsed?: boolean;
+  providers?: ProviderInfo[];
 }) {
   const card =
     "flex items-center gap-2.5 rounded-xl border border-line bg-panel px-3 py-2.5 text-left hover:border-lineStrong transition-colors";
   return (
     <div className={gridClass}>
-      {ps.ordered.map((p) => (
+      {(providers || ps.ordered).map((p) => (
         <button
           key={p.name}
           className={card}
@@ -394,7 +400,12 @@ export function ProviderCards({
         >
           <ProviderMark name={p.name} title={p.title} />
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-semibold leading-tight truncate">{p.title}</span>
+            <span
+              className="block text-[13px] font-semibold leading-tight truncate"
+              title={p.title}
+            >
+              {providerCardTitle(p)}
+            </span>
             {ps.statusFor(p, { lastUsed })}
           </span>
           <span className={isSubscriptionProvider(p) && !p.configured ? "text-accent text-[12px] font-semibold" : "text-faint text-[14px]"}>
@@ -450,7 +461,7 @@ function SubscriptionConnectPanel({ ps, tp }: { ps: ProviderSetupState; tp: stri
             </span>
             <span className="mt-0.5 block text-[12px] leading-relaxed text-muted">
               {connected
-                ? `Subscription Bridge will use the ${runtimeName} login already stored on this computer.`
+                ? `MeowWorker will use the ${runtimeName} login already stored on this computer.`
                 : waiting
                   ? result?.message || "Finish signing in in the browser. This page checks automatically."
                   : `A secure ${providerName} sign-in page opens in your browser. No API key is needed.`}
@@ -496,7 +507,7 @@ function SubscriptionConnectPanel({ ps, tp }: { ps: ProviderSetupState; tp: stri
       )}
 
       <p className="mt-2 text-[11.5px] leading-relaxed text-faint">
-        Sign-in is handled entirely by the official local {runtimeName} runtime. Subscription Bridge checks only whether it succeeded and never reads or copies the OAuth token.
+        Sign-in is handled entirely by the official local {runtimeName} runtime. MeowWorker checks only whether it succeeded and never reads or copies the OAuth token.
       </p>
 
       {info.name === "claude_subscription" && (

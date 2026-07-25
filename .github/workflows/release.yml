@@ -10,7 +10,7 @@
 #   - manual run     → builds and uploads workflow artifacts only (no release).
 #
 # Each installer is uploaded twice: once with its versioned name (archive) and once with a
-# stable name (OpenWorker-Subscription-Bridge-macos-arm64.dmg, …) so release links stay fixed.
+# stable name (MeowWorker-macos-arm64.dmg, …) so release links stay fixed.
 #   github.com/<repo>/releases/latest/download/<stable-name>
 # and never need updating.
 #
@@ -126,21 +126,21 @@ jobs:
           BUNDLE=surfaces/gui/src-tauri/target/release/bundle
           if [ "$RUNNER_OS" = "Windows" ]; then
             cp "$BUNDLE"/nsis/*.exe out/
-            cp "$BUNDLE"/nsis/*.exe out/OpenWorker-Subscription-Bridge-windows-setup.exe
+            cp "$BUNDLE"/nsis/*.exe out/MeowWorker-windows-setup.exe
             cp "$BUNDLE"/msi/*.msi out/
-            cp "$BUNDLE"/msi/*.msi out/OpenWorker-Subscription-Bridge-windows.msi
+            cp "$BUNDLE"/msi/*.msi out/MeowWorker-windows.msi
             # Updater signature for the NSIS installer (present only when the updater key
             # secret is configured). The .sig signs CONTENT, so the stable rename is safe.
             SIG=$(ls "$BUNDLE"/nsis/*.exe.sig 2>/dev/null | head -1 || true)
-            [ -n "$SIG" ] && cp "$SIG" out/OpenWorker-Subscription-Bridge-windows-setup.exe.sig
+            [ -n "$SIG" ] && cp "$SIG" out/MeowWorker-windows-setup.exe.sig
           else
             cp "$BUNDLE"/dmg/*.dmg out/
-            cp "$BUNDLE"/dmg/*.dmg out/OpenWorker-Subscription-Bridge-${{ matrix.slug }}.dmg
+            cp "$BUNDLE"/dmg/*.dmg out/MeowWorker-${{ matrix.slug }}.dmg
             # macOS updater artifact: the signed .app tarball the installed app swaps in.
             APP_TAR=$(find "$BUNDLE/macos" -maxdepth 1 -name '*.app.tar.gz' -print -quit)
             if [ -n "$APP_TAR" ]; then
-              cp "$APP_TAR" out/OpenWorker-Subscription-Bridge-${{ matrix.slug }}.app.tar.gz
-              [ -f "$APP_TAR.sig" ] && cp "$APP_TAR.sig" out/OpenWorker-Subscription-Bridge-${{ matrix.slug }}.app.tar.gz.sig
+              cp "$APP_TAR" out/MeowWorker-${{ matrix.slug }}.app.tar.gz
+              [ -f "$APP_TAR.sig" ] && cp "$APP_TAR.sig" out/MeowWorker-${{ matrix.slug }}.app.tar.gz.sig
             fi
           fi
           ls -la out
@@ -182,7 +182,7 @@ jobs:
             python3 packaging/make_update_manifest.py \
               --version "${TAG#v}" --tag "$TAG" --repo "$GITHUB_REPOSITORY" \
               --dist dist --out dist/latest.json \
-              --notes "OpenWorker Subscription Bridge ${TAG#v}"
+              --notes "MeowWorker ${TAG#v}"
           else
             echo "::warning::no updater signatures in dist/ — release ships WITHOUT auto-update manifest"
           fi

@@ -74,7 +74,7 @@ export function SlackHowItWorks({ workspaces }: { workspaces: SlackWorkspace[] }
     <div className="mb-5" data-testid="slack-howitworks">
       <div className="flex items-baseline gap-2.5">
         <h3 className="text-[13.5px] font-semibold tracking-tight">
-          Getting started with Slack &amp; Subscription Bridge
+          Getting started with Slack &amp; MeowWorker
         </h3>
         <button
           className="ml-auto shrink-0 inline-flex items-center gap-1.5 text-[12px] text-muted hover:text-ink"
@@ -226,7 +226,7 @@ function OwWin({ children }: { children: React.ReactNode }) {
   return (
     <div className="hiw-win hiw-ow">
       <div className="hiw-owtop">
-        <span className="hiw-dots"><i /><i /><i /></span> Subscription Bridge
+        <span className="hiw-dots"><i /><i /><i /></span> MeowWorker
       </div>
       <div className="hiw-owbody">{children}</div>
     </div>
@@ -236,7 +236,7 @@ function OwWin({ children }: { children: React.ReactNode }) {
 function OwRail({ hot, hotSub, glow }: { hot?: string; hotSub?: string; glow?: boolean }) {
   return (
     <div className="hiw-owrail">
-      <div className="hiw-brand">Subscription Bridge</div>
+      <div className="hiw-brand">MeowWorker</div>
       <div className="hiw-newbtn">＋ New session</div>
       <div className="hiw-ownav">⌕ Search</div>
       <div className="hiw-ownav">◷ Automations</div>
@@ -334,7 +334,7 @@ function SceneMention({ meFirst, meInitial }: { meFirst: string; meInitial: stri
               Reading the thread… signups up 3.4×, top referrer is the press page. <i>(replying in the Slack thread)</i>
             </div>
           </div>
-          <div className="hiw-owcomposer">Message Subscription Bridge…</div>
+          <div className="hiw-owcomposer">Message MeowWorker…</div>
         </div>
       </OwWin>
     </>
@@ -393,7 +393,7 @@ function SceneThread({ meFirst, meInitial }: { meFirst: string; meInitial: strin
       </SlackWin>
       <OwWin>
         <div className="hiw-owrail">
-          <div className="hiw-brand">Subscription Bridge</div>
+          <div className="hiw-brand">MeowWorker</div>
           <div className="hiw-newbtn">＋ New session</div>
           <div className="hiw-ownav">⌕ Search</div>
           <div className="hiw-ownav">◷ Automations</div>
@@ -414,7 +414,7 @@ function SceneThread({ meFirst, meInitial }: { meFirst: string; meInitial: strin
               Top countries: US 41%, India 22%, Germany 9% — context kept from the whole thread.
             </div>
           </div>
-          <div className="hiw-owcomposer">Message Subscription Bridge…</div>
+          <div className="hiw-owcomposer">Message MeowWorker…</div>
         </div>
       </OwWin>
     </>

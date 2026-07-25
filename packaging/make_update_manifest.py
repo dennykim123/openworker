@@ -9,9 +9,9 @@ Run by the release CI job after all platform builds are staged in one directory:
 Looks for the updater artifacts by their STABLE names (the same names release.yml
 uploads):
 
-    OpenWorker-Subscription-Bridge-macos-arm64.app.tar.gz(.sig)
+    MeowWorker-macos-arm64.app.tar.gz(.sig)
         -> platforms["darwin-aarch64"]
-    OpenWorker-Subscription-Bridge-windows-setup.exe(.sig)
+    MeowWorker-windows-setup.exe(.sig)
         -> platforms["windows-x86_64"]
 
 URLs point at the TAG-pinned GitHub download path (releases/download/<tag>/<asset>),
@@ -34,8 +34,8 @@ import sys
 
 # stable asset name -> Tauri platform key
 ARTIFACTS = {
-    "OpenWorker-Subscription-Bridge-macos-arm64.app.tar.gz": "darwin-aarch64",
-    "OpenWorker-Subscription-Bridge-windows-setup.exe": "windows-x86_64",
+    "MeowWorker-macos-arm64.app.tar.gz": "darwin-aarch64",
+    "MeowWorker-windows-setup.exe": "windows-x86_64",
 }
 
 

@@ -14,7 +14,7 @@ export async function scratchBaseIfReady(): Promise<string | null> {
     const res = await fetch(`${BACKEND}/v1/settings`);
     const s = await res.json();
     if (res.ok && s.model_ready) {
-      return String(s.scratch_base || "~/OpenWorker Subscription Bridge").replace(/^~(?=\/|$)/, homedir());
+      return String(s.scratch_base || "~/MeowWorker").replace(/^~(?=\/|$)/, homedir());
     }
   } catch {
     /* backend unreachable */
