@@ -88,7 +88,10 @@ def test_complete_uses_output_file_and_omits_model_for_default(monkeypatch):
 
 
 def test_complete_parses_tool_calls(monkeypatch):
+    seen: dict[str, object] = {}
+
     def fake_run(cmd, **kwargs):
+        seen["cmd"] = cmd
         out_path = Path(cmd[cmd.index("-o") + 1])
         out_path.write_text(
             json.dumps(
@@ -134,6 +137,7 @@ def test_complete_parses_tool_calls(monkeypatch):
     assert len(turn.tool_calls) == 1
     assert turn.tool_calls[0].name == "read_file"
     assert turn.tool_calls[0].arguments == {"path": "notes.txt"}
+    assert seen["cmd"][seen["cmd"].index("-m") + 1] == "gpt-5.6-sol"
 
 
 def test_complete_ignores_tool_calls_when_no_tools_were_offered(monkeypatch):

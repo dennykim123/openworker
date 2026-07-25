@@ -129,7 +129,8 @@ export function ModelsTab() {
           <div className={SEC_H + " mb-1.5"}>Models</div>
           <p className="text-[12px] text-muted mb-2.5 leading-relaxed">
             Ticked models show in the composer's picker; the black badge marks the default for new
-            sessions.
+            sessions. Choose Automatic or Auto to let the official CLI pick the best model your
+            subscription includes; a named model may be unavailable on some plans.
           </p>
           <ModelChecklist
             provider={ps.sel}

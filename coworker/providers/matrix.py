@@ -44,9 +44,21 @@ class ModelEntry:
 
 MATRIX: dict[str, ModelEntry] = {
     # -- first-party ------------------------------------------------------------
-    "claude_subscription:default": ModelEntry("Claude Subscription · Claude Code", _CODEX),
-    "codex:default": ModelEntry("ChatGPT Subscription · Codex", _CODEX),
-    "gemini_subscription:default": ModelEntry("Gemini Subscription · Gemini CLI", _CODEX),
+    # Subscription runtimes intentionally prefer stable CLI aliases over pinned backend
+    # versions.  The official runtimes keep aliases current and reject choices the signed-in
+    # plan cannot use; every adapter forwards a non-default selection through ``--model``.
+    "codex:default": ModelEntry("Automatic · ChatGPT Subscription", _CODEX),
+    "codex:gpt-5.6-sol": ModelEntry("GPT-5.6 Sol · ChatGPT Subscription", _CODEX),
+    "codex:gpt-5.6-terra": ModelEntry("GPT-5.6 Terra · ChatGPT Subscription", _CODEX),
+    "codex:gpt-5.6-luna": ModelEntry("GPT-5.6 Luna · ChatGPT Subscription", _CODEX),
+    "claude_subscription:default": ModelEntry("Automatic · Claude Subscription", _CODEX),
+    "claude_subscription:opus": ModelEntry("Opus · Claude Subscription", _CODEX),
+    "claude_subscription:sonnet": ModelEntry("Sonnet · Claude Subscription", _CODEX),
+    "claude_subscription:haiku": ModelEntry("Haiku · Claude Subscription", _CODEX),
+    "gemini_subscription:default": ModelEntry("Auto · Gemini Subscription", _CODEX),
+    "gemini_subscription:pro": ModelEntry("Pro · Gemini Subscription", _CODEX),
+    "gemini_subscription:flash": ModelEntry("Flash · Gemini Subscription", _CODEX),
+    "gemini_subscription:flash-lite": ModelEntry("Flash Lite · Gemini Subscription", _CODEX),
     # GPT-5.6 (2026-07-09): number = generation, Sol/Terra/Luna = capability tiers.
     # Bare "gpt-5.6" aliases to Sol server-side; we list the explicit tier ids only.
     # Rolling out — accounts without access get a friendly error (providers/errors.py).

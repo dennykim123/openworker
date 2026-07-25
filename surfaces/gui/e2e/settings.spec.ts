@@ -55,12 +55,31 @@ test("Models: provider gallery states; vendor form previews models", async ({ pa
 
   await page.getByTestId("set-provider-codex").click();
   await expect(page.getByText(/never reads or copies the OAuth token/)).toBeVisible();
+  await expect(page.getByText("GPT-5.6 Sol · ChatGPT Subscription")).toBeVisible();
+  await expect(page.getByText("GPT-5.6 Terra · ChatGPT Subscription")).toBeVisible();
+  await expect(page.getByText("GPT-5.6 Luna · ChatGPT Subscription")).toBeVisible();
   await expect(page.getByTestId("set-remove-key")).toHaveCount(0);
   await page.getByTestId("set-back").click();
 
   await page.getByTestId("set-provider-claude_subscription").click();
   await expect(page.getByText(/official local Claude Code runtime/)).toBeVisible();
+  await expect(page.getByText("Opus · Claude Subscription")).toBeVisible();
+  await expect(page.getByText("Sonnet · Claude Subscription")).toBeVisible();
+  await expect(page.getByText("Haiku · Claude Subscription")).toBeVisible();
+  const sonnet = page.locator(".mlist-row").filter({ hasText: "Sonnet · Claude Subscription" });
+  await sonnet.hover();
+  const [defaultRequest] = await Promise.all([
+    page.waitForRequest((r) => r.url().endsWith("/v1/settings/default-model") && r.method() === "POST"),
+    sonnet.getByRole("button", { name: "Make default" }).click(),
+  ]);
+  expect(defaultRequest.postDataJSON()).toEqual({ model: "claude_subscription:sonnet" });
   await expect(page.getByTestId("set-remove-key")).toHaveCount(0);
+  await page.getByTestId("set-back").click();
+
+  await page.getByTestId("set-provider-gemini_subscription").click();
+  await expect(page.getByText("Pro · Gemini Subscription")).toBeVisible();
+  await expect(page.getByText("Flash · Gemini Subscription")).toBeVisible();
+  await expect(page.getByText("Flash Lite · Gemini Subscription")).toBeVisible();
   await page.getByTestId("set-back").click();
 
   // The composer-picker card lists the curated models with provider tags.

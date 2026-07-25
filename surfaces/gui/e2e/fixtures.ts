@@ -44,6 +44,18 @@ const SETTINGS = {
   // Curated-matrix display names (subset — mirrors /v1/settings.model_labels).
   model_labels: {
     "anthropic:claude-opus-4-8": "Claude Opus 4.8 · Anthropic",
+    "codex:default": "Automatic · ChatGPT Subscription",
+    "codex:gpt-5.6-sol": "GPT-5.6 Sol · ChatGPT Subscription",
+    "codex:gpt-5.6-terra": "GPT-5.6 Terra · ChatGPT Subscription",
+    "codex:gpt-5.6-luna": "GPT-5.6 Luna · ChatGPT Subscription",
+    "claude_subscription:default": "Automatic · Claude Subscription",
+    "claude_subscription:opus": "Opus · Claude Subscription",
+    "claude_subscription:sonnet": "Sonnet · Claude Subscription",
+    "claude_subscription:haiku": "Haiku · Claude Subscription",
+    "gemini_subscription:default": "Auto · Gemini Subscription",
+    "gemini_subscription:pro": "Pro · Gemini Subscription",
+    "gemini_subscription:flash": "Flash · Gemini Subscription",
+    "gemini_subscription:flash-lite": "Flash Lite · Gemini Subscription",
     "zai:glm-5.2": "GLM-5.2 · Z AI",
   },
 };
@@ -326,11 +338,11 @@ const baseName = (p: string) => p.split("/").filter(Boolean).pop() || p;
 
 export const PROVIDERS = [
   // gemini_subscription: external Google AI Pro/Ultra login through Gemini CLI.
-  { name: "gemini_subscription", title: "Gemini Subscription (Gemini CLI)", needs_key: false, auth_type: "gemini_login", blurb: "Uses your Google AI subscription through Gemini CLI.", fields: [{ key: "gemini_bin", label: "Gemini CLI executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/opt/homebrew/bin/gemini" }], configured: true, values: {}, suggested_models: ["default"], key_set_at: null, last_used_at: null },
+  { name: "gemini_subscription", title: "Gemini Subscription (Gemini CLI)", needs_key: false, auth_type: "gemini_login", blurb: "Uses your Google AI subscription through Gemini CLI.", fields: [{ key: "gemini_bin", label: "Gemini CLI executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/opt/homebrew/bin/gemini" }], configured: true, values: {}, suggested_models: ["default", "pro", "flash", "flash-lite"], key_set_at: null, last_used_at: null },
   // claude_subscription: external Claude.ai subscription login through Claude Code.
-  { name: "claude_subscription", title: "Claude Subscription (Claude Code)", needs_key: false, auth_type: "claude_login", blurb: "Uses your existing Claude.ai subscription through Claude Code.", fields: [{ key: "claude_bin", label: "Claude Code executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/opt/homebrew/bin/claude" }], configured: true, values: {}, suggested_models: ["default"], key_set_at: null, last_used_at: null },
+  { name: "claude_subscription", title: "Claude Subscription (Claude Code)", needs_key: false, auth_type: "claude_login", blurb: "Uses your existing Claude.ai subscription through Claude Code.", fields: [{ key: "claude_bin", label: "Claude Code executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/opt/homebrew/bin/claude" }], configured: true, values: {}, suggested_models: ["default", "opus", "sonnet", "haiku"], key_set_at: null, last_used_at: null },
   // codex: external ChatGPT subscription login, detected through the official local runtime.
-  { name: "codex", title: "ChatGPT subscription (Codex)", needs_key: false, auth_type: "codex_login", blurb: "Uses your existing ChatGPT subscription through the official Codex app.", fields: [{ key: "codex_bin", label: "Codex executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/Applications/ChatGPT.app/Contents/Resources/codex" }], configured: true, values: {}, suggested_models: ["default"], key_set_at: null, last_used_at: null },
+  { name: "codex", title: "ChatGPT subscription (Codex)", needs_key: false, auth_type: "codex_login", blurb: "Uses your existing ChatGPT subscription through the official Codex app.", fields: [{ key: "codex_bin", label: "Codex executable", secret: false, required: false, help: "Auto-detected when left blank.", placeholder: "/Applications/ChatGPT.app/Contents/Resources/codex" }], configured: true, values: {}, suggested_models: ["default", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"], key_set_at: null, last_used_at: null },
   // openai: configured + used (drives the "Last used" sub-line and the status dot).
   { name: "openai", title: "OpenAI", needs_key: true, fields: [{ key: "api_key", label: "OpenAI API key", secret: true, required: true, help: "", placeholder: "sk-…" }], configured: true, values: {}, suggested_models: ["gpt-5.5"], key_set_at: "2026-06-12", last_used_at: Math.floor(Date.now() / 1000) - 7200 },
   // anthropic: configured but never used ("Not used yet").
@@ -813,6 +825,13 @@ export async function mockApi(page: import("@playwright/test").Page) {
 
     if (p.endsWith("/v1/health")) return json(HEALTH);
     if (p.endsWith("/v1/settings")) return json(SETTINGS);
+    if (p.endsWith("/v1/settings/models/add") && m === "POST") {
+      const model = req.postDataJSON().model;
+      return json({ ok: true, ...SETTINGS, models: [...new Set([...SETTINGS.models, model])] });
+    }
+    if (p.endsWith("/v1/settings/default-model") && m === "POST") {
+      return json({ ok: true, model: req.postDataJSON().model });
+    }
     if (p.endsWith("/v1/settings/pdf") && m === "POST") {
       Object.assign(SETTINGS, req.postDataJSON());
       return json({

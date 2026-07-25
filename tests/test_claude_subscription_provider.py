@@ -115,7 +115,10 @@ def test_complete_disables_native_tools_and_parses_structured_output(monkeypatch
 
 
 def test_complete_parses_openworker_tool_calls(monkeypatch):
+    seen = {}
+
     def fake_run(cmd, **kwargs):
+        seen["cmd"] = cmd
         return SimpleNamespace(
             returncode=0,
             stdout=json.dumps(
@@ -159,6 +162,7 @@ def test_complete_parses_openworker_tool_calls(monkeypatch):
     assert turn.finish_reason == "tool_calls"
     assert turn.tool_calls[0].name == "read_file"
     assert turn.tool_calls[0].arguments == {"path": "notes.txt"}
+    assert seen["cmd"][seen["cmd"].index("--model") + 1] == "sonnet"
 
 
 def test_complete_ignores_unoffered_tool_calls(monkeypatch):

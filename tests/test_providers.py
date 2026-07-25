@@ -393,18 +393,44 @@ def test_matrix_labels_and_custom_model_fallback():
     from coworker.providers.matrix import MATRIX, model_labels
 
     labels = model_labels()
-    assert labels["codex:default"] == "ChatGPT Subscription · Codex"
-    assert labels["claude_subscription:default"] == "Claude Subscription · Claude Code"
-    assert labels["gemini_subscription:default"] == "Gemini Subscription · Gemini CLI"
+    assert labels["codex:default"] == "Automatic · ChatGPT Subscription"
+    assert labels["codex:gpt-5.6-sol"] == "GPT-5.6 Sol · ChatGPT Subscription"
+    assert labels["claude_subscription:default"] == "Automatic · Claude Subscription"
+    assert labels["claude_subscription:sonnet"] == "Sonnet · Claude Subscription"
+    assert labels["gemini_subscription:default"] == "Auto · Gemini Subscription"
+    assert labels["gemini_subscription:pro"] == "Pro · Gemini Subscription"
     assert labels["together:zai-org/GLM-5.2"] == "GLM-5.2 · via Together"
     assert labels["zai:glm-5.2"] == "GLM-5.2 · Z AI"
     # Deliberately small: agent-capable current models only (owner call, 2026-07-04).
-    assert len(MATRIX) < 40
+    assert len(MATRIX) < 50
     assert all(e.caps.tools for e in MATRIX.values())
     # A custom (unlisted) reseller model falls back to the conservative default — usable,
     # but at the user's own risk (no parallel tool calls assumed).
     caps = capabilities_for("together:some-org/Brand-New-Model")
     assert caps.tools and not caps.parallel_tool_calls
+
+
+def test_subscription_model_choices_use_official_runtime_names():
+    from coworker.providers.matrix import models_for_provider
+
+    assert models_for_provider("codex") == [
+        "default",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+    ]
+    assert models_for_provider("claude_subscription") == [
+        "default",
+        "opus",
+        "sonnet",
+        "haiku",
+    ]
+    assert models_for_provider("gemini_subscription") == [
+        "default",
+        "pro",
+        "flash",
+        "flash-lite",
+    ]
 
 
 def test_gemini_subscription_verification_checks_cache_metadata_without_reading_it(
@@ -461,7 +487,7 @@ def test_gemini_subscription_provider_parses_structured_turn(monkeypatch, tmp_pa
     monkeypatch.setattr(mod.subprocess, "run", fake_run)
     provider = mod.GeminiSubscriptionProvider(gemini_bin=str(gemini))
     turn = provider.complete(
-        model="default",
+        model="pro",
         messages=[{"role": "user", "content": "hi"}],
         tools=[{"type": "function", "function": {"name": "read_file"}}],
     )
@@ -470,6 +496,7 @@ def test_gemini_subscription_provider_parses_structured_turn(monkeypatch, tmp_pa
     assert turn.tool_calls[0].name == "read_file"
     assert turn.tool_calls[0].arguments == {"path": "a.py"}
     assert "--approval-mode" in seen["cmd"] and "plan" in seen["cmd"]
+    assert seen["cmd"][seen["cmd"].index("--model") + 1] == "pro"
     assert seen["env"]["NO_BROWSER"] == "true"
 
 
