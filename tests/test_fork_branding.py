@@ -27,7 +27,7 @@ def test_desktop_identity_and_update_channel_are_fork_specific() -> None:
 
     assert config["productName"] == "OpenWorker Subscription Bridge"
     assert config["identifier"] == "com.dennykim.openworkersubscriptionbridge"
-    assert config["version"] == "0.1.7"
+    assert config["version"] == "0.1.8"
 
     endpoints = config["plugins"]["updater"]["endpoints"]
     assert endpoints == [
